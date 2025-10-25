@@ -19,6 +19,7 @@ import { onAuthStateChangedListener } from './services/firebaseService';
 import type { AppUser } from './types';
 
 import { CacheProvider } from './contexts/CacheContext';
+import DiscoveryNavigator from './components/DiscoveryNavigator';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -27,7 +28,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const {
+  const { 
     imageFile,
     imageUrl,
     landmarkInfo,
@@ -41,7 +42,8 @@ function App() {
     setSelectedVoice,
     handleImageUpload,
     handleLanguageChange,
-    resetState
+    resetState,
+    discoveryId // Get discoveryId from the hook
   } = useLandmarkProcessing();
 
   useEffect(() => {
@@ -65,7 +67,10 @@ function App() {
       return <Loader message={loadingMessage} />;
     }
 
-    if (landmarkInfo && imageUrl && imageFile && audioData) {
+    // If we have landmarkInfo and are not currently navigating to a discovery page,
+    // we should not render ResultScreen here, as navigation will handle it.
+    // The ResultScreen will be rendered by the /discoveries/:discoveryId route.
+    if (landmarkInfo && imageUrl && imageFile && audioData && !discoveryId) {
       return (
         <ResultScreen
           user={currentUser}
@@ -100,7 +105,8 @@ function App() {
 
   return (
     <CacheProvider>
-      <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col items-center p-4 sm:p-6 md:p-8">
+      <DiscoveryNavigator>
+        <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col items-center p-4 sm:p-6 md:p-8">
         <Header 
           user={currentUser} 
           onSignInClick={() => navigate('/signin')}
@@ -147,6 +153,7 @@ function App() {
           }}
         />
       </div>
+    </DiscoveryNavigator>
     </CacheProvider>
   );
 }
