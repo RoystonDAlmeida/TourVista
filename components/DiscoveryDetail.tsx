@@ -5,7 +5,8 @@ import { db } from '../services/firebaseService';
 import ResultDisplay from './ResultDisplay';
 import Loader from './Loader';
 import ErrorDisplay from './ErrorDisplay';
-import type { AppUser, LandmarkInfo, AudioData } from '../types';
+import type { AppUser, LandmarkInfo } from '../types';
+import { useCache } from '../contexts/CacheContext';
 
 interface DiscoveryDetailProps {
   user: AppUser | null;
@@ -14,9 +15,10 @@ interface DiscoveryDetailProps {
 const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
   const { discoveryId } = useParams<{ discoveryId: string }>();
   const navigate = useNavigate();
-  const [discovery, setDiscovery] = useState<{ landmarkInfo: LandmarkInfo; imageUrl: string; audioData: AudioData; } | null>(null);
+  const [discovery, setDiscovery] = useState<{ landmarkInfo: LandmarkInfo; imageUrl: string; } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getDiscovery, cacheDiscovery } = useCache();
 
   useEffect(() => {
     if (!user) {
@@ -31,6 +33,14 @@ const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
         return;
       }
 
+      // Try to get from cache first
+      const cached = getDiscovery(discoveryId);
+      if (cached) {
+        setDiscovery(cached);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // Fetch the discovery with user's id
         const docRef = doc(db, 'users', user.uid, 'discoveries', discoveryId);
@@ -38,7 +48,9 @@ const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
 
         if (docSnap.exists()) {
           const discoveryData = docSnap.data();
-          setDiscovery(discoveryData as { landmarkInfo: LandmarkInfo; imageUrl: string; audioData: AudioData; });
+          const fullDiscovery = discoveryData as { landmarkInfo: LandmarkInfo; imageUrl: string; };
+          setDiscovery(fullDiscovery);
+          cacheDiscovery(discoveryId, fullDiscovery); // Cache after fetching
         } else {
           setError('Discovery not found.');
         }
@@ -50,7 +62,7 @@ const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
     };
 
     fetchDiscovery();
-  }, [discoveryId, user, navigate]);
+  }, [discoveryId, user, navigate, getDiscovery, cacheDiscovery]);
 
   if (isLoading) {
     return <Loader message="Loading discovery..." />;
@@ -69,6 +81,7 @@ const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
       user={user}
       imageFile={null}
       landmarkInfo={discovery.landmarkInfo}
+      imageUrl={discovery.imageUrl}
     />
   );
 };
