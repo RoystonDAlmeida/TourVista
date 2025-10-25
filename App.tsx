@@ -46,6 +46,11 @@ function App() {
     discoveryId // Get discoveryId from the hook
   } = useLandmarkProcessing();
 
+  const handleStartNewTour = () => {
+    resetState();
+    navigate('/');
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener((user) => {
       setCurrentUser(user);
@@ -78,7 +83,7 @@ function App() {
           imageUrl={imageUrl}
           landmarkInfo={landmarkInfo}
           audioData={audioData}
-          onStartNewTour={resetState}
+          onStartNewTour={handleStartNewTour}
           discoveryId={discoveryId!}
         />
       );
@@ -129,7 +134,7 @@ function App() {
           <Routes>
             <Route path="/discoveries" element={<MyDiscoveries user={currentUser} />} />
             <Route path="/itineraries" element={<MyItineraries user={currentUser} />} />
-            <Route path="/discoveries/:discoveryId" element={<DiscoveryDetail user={currentUser} />} />
+            <Route path="/discoveries/:discoveryId" element={<DiscoveryDetail user={currentUser} onStartNewTour={handleStartNewTour} />} />
             <Route path="/*" element={renderContent()} />
           </Routes>
         </main>
