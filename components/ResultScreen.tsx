@@ -8,6 +8,7 @@ interface ResultScreenProps {
   imageUrl: string;
   landmarkInfo: LandmarkInfo;
   audioData?: string;
+  discoveryId: string;
   onStartNewTour: () => void;
 }
 
@@ -17,6 +18,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
   imageUrl,
   landmarkInfo,
   audioData,
+  discoveryId,
   onStartNewTour
 }) => {
   return (
@@ -27,6 +29,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
         imageUrl={imageUrl} 
         landmarkInfo={landmarkInfo} 
         audioData={audioData}
+        discoveryId={discoveryId}
       />
       <button
         onClick={onStartNewTour}
