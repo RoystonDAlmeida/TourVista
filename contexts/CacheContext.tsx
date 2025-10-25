@@ -77,7 +77,11 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     try {
-      window.sessionStorage.setItem(DISCOVERY_LIST_CACHE_KEY, JSON.stringify(cachedDiscoveryList));
+      if (cachedDiscoveryList) {
+        window.sessionStorage.setItem(DISCOVERY_LIST_CACHE_KEY, JSON.stringify(cachedDiscoveryList));
+      } else {
+        window.sessionStorage.removeItem(DISCOVERY_LIST_CACHE_KEY);
+      }
     } catch (error) {
       console.error("Error writing discovery list cache to sessionStorage", error);
     }
