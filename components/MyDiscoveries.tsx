@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDiscoveriesForUser, deleteDiscoveryForUser } from '../services/firebaseService';
+import { getDiscoveriesForUser } from '../services/firebaseService';
 import DiscoveryCard from './DiscoveryCard';
 import Loader from './Loader';
 import ErrorDisplay from './ErrorDisplay';
 import type { AppUser, SavedDiscovery } from '../types';
 import { useCache } from '../contexts/CacheContext';
+import { handleDeleteDiscovery as deleteDiscoveryHandler } from '../utils/deleteUtils';
 
 interface MyDiscoveriesProps {
   user: AppUser | null;
@@ -39,7 +40,7 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
           ...discovery,
           createdAt: discovery.createdAt.toString(),
         }));
-        setDiscoveries(userDiscoveries);
+        setDiscoveries(serializableDiscoveries);
 
         // Cache the user discoveries after fetching from DB
         cacheDiscoveryList(serializableDiscoveries);
@@ -54,17 +55,14 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
     fetchDiscoveries();
   }, [user, navigate, getDiscoveryList, cacheDiscoveryList]);
 
-  const handleDeleteDiscovery = async (discoveryId: string) => {
+  const handleDeleteDiscovery = (discoveryId: string) => {
     if (!user) return;
-    try {
-      await deleteDiscoveryForUser(user.uid, discoveryId);
+    const onSuccess = () => {
       const updatedDiscoveries = discoveries.filter(d => d.id !== discoveryId);
       setDiscoveries(updatedDiscoveries);
       cacheDiscoveryList(updatedDiscoveries.map(d => ({ ...d, createdAt: d.createdAt.toString() })));
-    } catch (err) {
-      setError('Failed to delete discovery.');
-      console.error(err);
-    }
+    };
+    deleteDiscoveryHandler(user.uid, discoveryId, onSuccess, setError);
   };
 
   if (isLoading) {
