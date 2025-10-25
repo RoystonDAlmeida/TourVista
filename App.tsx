@@ -79,6 +79,7 @@ function App() {
           landmarkInfo={landmarkInfo}
           audioData={audioData}
           onStartNewTour={resetState}
+          discoveryId={discoveryId!}
         />
       );
     }
