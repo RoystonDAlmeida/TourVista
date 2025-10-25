@@ -7,7 +7,7 @@ interface ResultScreenProps {
   imageFile: File;
   imageUrl: string;
   landmarkInfo: LandmarkInfo;
-  audioData: string;
+  audioData?: string;
   onStartNewTour: () => void;
 }
 
