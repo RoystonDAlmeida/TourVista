@@ -1,6 +1,6 @@
 import React from 'react';
 import ImageUploader from './ImageUploader';
-import SavedItineraries from './SavedItineraries';
+import SavedItinerariesAndDiscoveries from './SavedItinerariesAndDiscoveries';
 import type { AppUser } from '../types';
 
 interface UserDashboardProps {
@@ -18,7 +18,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ user, onImageUpload, isLo
         </h2>
         <p className="text-slate-400 mt-1">Ready for your next adventure?</p>
       </div>
-      <SavedItineraries user={user} />
+      <SavedItinerariesAndDiscoveries user={user} />
       <div className="mt-12">
         <ImageUploader onImageUpload={onImageUpload} disabled={isLoading} />
       </div>
