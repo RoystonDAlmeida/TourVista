@@ -140,12 +140,13 @@ export const deleteItineraryForUser = async (userId: string, itineraryId: string
 };
 
 // Saving discoveries for users in firebase
-export const saveDiscoveryForUser = async (userId: string, discoveryData: object) => {
+export const saveDiscoveryForUser = async (userId: string, discoveryData: object): Promise<string> => {
     const discoveriesCollectionRef = collection(db, 'users', userId, 'discoveries');
-    await addDoc(discoveriesCollectionRef, {
+    const docRef = await addDoc(discoveriesCollectionRef, {
         ...discoveryData,
         createdAt: serverTimestamp(),
     });
+    return docRef.id;
 };
 
 export const getDiscoveriesForUser = async (userId: string): Promise<SavedDiscovery[]> => {
