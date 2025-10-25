@@ -7,7 +7,7 @@ import PostcardGenerator from './PostcardGenerator';
 import ItineraryGenerator from './ItineraryGenerator';
 import HistoricalTimeline from './HistoricalTimeline';
 import SavedItinerariesAndDiscoveries from './SavedItinerariesAndDiscoveries';
-import { BookOpenIcon, ChatBubbleLeftRightIcon, MapPinIcon, SparklesIcon, CalendarDaysIcon, HourglassIcon, BookmarkSquareIcon } from './icons';
+import { BookOpenIcon, ChatBubbleLeftRightIcon, MapPinIcon, SparklesIcon, CalendarDaysIcon, HourglassIcon, BookmarkSquareIcon, ExternalLinkIcon } from './icons';
 
 interface ResultDisplayProps {
   user: AppUser | null;
@@ -49,22 +49,26 @@ const TourGuideTab: React.FC<Pick<ResultDisplayProps, 'landmarkInfo' | 'audioDat
         { audioData && <AudioPlayer base64Audio={audioData} />}
         <div>
             <h3 className="text-lg font-semibold text-slate-400 mb-2">Sources</h3>
-            <ul className="space-y-1 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {landmarkInfo.sources.map((source, index) => (
                 source.web?.uri && (
-                <li key={index} className="truncate">
+                <div key={index} className="bg-slate-700 p-4 rounded-lg shadow-md flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-semibold text-slate-200 mb-1 text-base">{source.web.title || 'Web Source'}</h4>
+                    </div>
                     <a
                     href={source.web.uri}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 hover:underline transition"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline transition flex items-center gap-1 text-sm mt-2"
                     >
-                    {source.web.title || 'Web Source'}
+                    {source.web.uri.length > 30 ? `${source.web.uri.substring(0, 27)}...` : source.web.uri}
+                    <ExternalLinkIcon className="w-4 h-4" />
                     </a>
-                </li>
+                </div>
                 )
             ))}
-            </ul>
+            </div>
         </div>
         </div>
     </div>
