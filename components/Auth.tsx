@@ -54,6 +54,16 @@ const Auth: React.FC<AuthProps> = ({ user, onSignInClick }) => {
                 {showDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-md shadow-lg py-1 z-20">
                         <Link 
+                            to="/" 
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-cyan-400"
+                            onClick={() => setShowDropdown(false)}
+                        >
+                            <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125h9.75a1.125 1.125 0 001.125-1.125V9.75M8.25 21h8.25" />
+                            </svg>
+                            Home
+                        </Link>
+                        <Link 
                             to="/discoveries" 
                             className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-cyan-400"
                             onClick={() => setShowDropdown(false)}
