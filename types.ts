@@ -22,6 +22,7 @@ export interface LandmarkInfo {
   sources: GroundingChunk[];
   latitude: number;
   longitude: number;
+  countryCode: string;
 }
 
 export interface ChatMessage {
@@ -42,6 +43,12 @@ export interface Language {
   name: string;
 }
 
+export interface AudioData {
+  audioContent: string;
+  languageCode: string;
+  voice: string;
+}
+
 export interface AppUser {
   uid: string;
   displayName: string | null;
@@ -56,5 +63,13 @@ export interface SavedItinerary {
   duration: string;
   interests: string;
   itineraryContent: string;
-  createdAt: Date;
+  createdAt: Date | string;
+}
+
+export interface SavedDiscovery {
+  id: string;
+  landmarkInfo: LandmarkInfo;
+  languages: Language[];
+  createdAt: Date | string;
+  imageUrl: string;
 }
