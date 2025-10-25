@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import Loader from './components/Loader';
 import Settings from './components/Settings';
 import Header from './components/Header';
@@ -10,10 +10,15 @@ import UserDashboard from './components/UserDashboard';
 import ResultScreen from './components/ResultScreen';
 import Footer from './components/Footer';
 import AuthModal from './components/auth/AuthModal';
+import DiscoveryDetail from './components/DiscoveryDetail';
+import MyDiscoveries from './components/MyDiscoveries';
+import MyItineraries from './components/MyItineraries';
 
 import { useLandmarkProcessing } from './hooks/useLandmarkProcessing';
 import { onAuthStateChangedListener } from './services/firebaseService';
 import type { AppUser } from './types';
+
+import { CacheProvider } from './contexts/CacheContext';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -60,7 +65,7 @@ function App() {
       return <Loader message={loadingMessage} />;
     }
 
-    if (landmarkInfo && imageUrl && audioData && imageFile) {
+    if (landmarkInfo && imageUrl && imageFile && audioData) {
       return (
         <ResultScreen
           user={currentUser}
@@ -73,8 +78,8 @@ function App() {
       );
     }
 
-    if (currentUser) {
-      
+    if (currentUser && location.pathname === '/') {
+      // Fetch the user dashboard with saved itineraries and discoveries
       return (
         <UserDashboard
           user={currentUser}
@@ -94,48 +99,55 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col items-center p-4 sm:p-6 md:p-8">
-      <Header 
-        user={currentUser} 
-        onSignInClick={() => navigate('/signin')}
-      >
-        {landmarkInfo && (
-          <Settings 
-            availableLanguages={availableLanguages}
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={handleLanguageChange}
-            selectedVoice={selectedVoice}
-            onVoiceChange={setSelectedVoice}
-            disabled={isLoading || !imageFile}
-          />
-        )}
-      </Header>
+    <CacheProvider>
+      <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col items-center p-4 sm:p-6 md:p-8">
+        <Header 
+          user={currentUser} 
+          onSignInClick={() => navigate('/signin')}
+        >
+          {landmarkInfo && (
+            <Settings 
+              availableLanguages={availableLanguages}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={handleLanguageChange}
+              selectedVoice={selectedVoice}
+              onVoiceChange={setSelectedVoice}
+              disabled={isLoading || !imageFile}
+            />
+          )}
+        </Header>
 
-      <main className="w-full flex-grow flex flex-col items-center justify-center">
-        <ErrorDisplay error={error} />
-        {renderContent()}
-      </main>
-      
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => {
-          navigate('/');
-        }}
-      />
-      <Footer />
-      
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1f2937',
-            color: '#f8fafc',
-            border: '1px solid #374151',
-          },
-        }}
-      />
-    </div>
+        <main className="w-full flex-grow flex flex-col items-center justify-center">
+          <ErrorDisplay error={error} />
+          <Routes>
+            <Route path="/discoveries" element={<MyDiscoveries user={currentUser} />} />
+            <Route path="/itineraries" element={<MyItineraries user={currentUser} />} />
+            <Route path="/discoveries/:discoveryId" element={<DiscoveryDetail user={currentUser} />} />
+            <Route path="/*" element={renderContent()} />
+          </Routes>
+        </main>
+        
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => {
+            navigate('/');
+          }}
+        />
+        <Footer />
+        
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1f2937',
+              color: '#f8fafc',
+              border: '1px solid #374151',
+            },
+          }}
+        />
+      </div>
+    </CacheProvider>
   );
 }
 
