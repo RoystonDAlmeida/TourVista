@@ -22,10 +22,11 @@ import {
     addDoc,
     getDocs,
     serverTimestamp,
+    deleteDoc,
     query,
     orderBy,
 } from 'firebase/firestore';
-import type { AppUser, SavedItinerary } from '../types';
+import type { AppUser, SavedItinerary, SavedDiscovery } from '../types';
 
 // Create firebase config object
 const firebaseConfig = {
@@ -133,4 +134,39 @@ export const getItinerariesForUser = async (userId: string): Promise<SavedItiner
     });
 };
 
-export { auth };
+export const deleteItineraryForUser = async (userId: string, itineraryId: string) => {
+    const itineraryDocRef = doc(db, 'users', userId, 'itineraries', itineraryId);
+    await deleteDoc(itineraryDocRef);
+};
+
+// Saving discoveries for users in firebase
+export const saveDiscoveryForUser = async (userId: string, discoveryData: object) => {
+    const discoveriesCollectionRef = collection(db, 'users', userId, 'discoveries');
+    await addDoc(discoveriesCollectionRef, {
+        ...discoveryData,
+        createdAt: serverTimestamp(),
+    });
+};
+
+export const getDiscoveriesForUser = async (userId: string): Promise<SavedDiscovery[]> => {
+    const discoveriesCollectionRef = collection(db, 'users', userId, 'discoveries');
+    const q = query(discoveriesCollectionRef, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            landmarkInfo: data.landmarkInfo,
+            languages: data.languages,
+            imageUrl: data.imageUrl, // Add this line
+            createdAt: data.createdAt.toDate(),
+        } as SavedDiscovery;
+    });
+};
+
+export const deleteDiscoveryForUser = async (userId: string, discoveryId: string) => {
+    const discoveryDocRef = doc(db, 'users', userId, 'discoveries', discoveryId);
+    await deleteDoc(discoveryDocRef);
+};
+export { auth, db };
