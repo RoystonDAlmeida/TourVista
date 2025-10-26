@@ -1,10 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateTimeline } from '../services/geminiService';
-import type { LandmarkInfo } from '../types';
+import { getDiscovery, updateDiscoveryWithTimeline } from '../services/firebaseService';
+import { useCache } from '../contexts/CacheContext';
+import type { LandmarkInfo, AppUser } from '../types';
 import Loader from './Loader';
 
-// Function for formatting the timeline markdown text returned by Gemini
+// TimelineRenderer component remains the same as before
 const TimelineRenderer: React.FC<{ markdownText: string }> = ({ markdownText }) => {
     const lines = markdownText.split('\n').filter(line => line.trim() !== '');
     const elements: React.ReactNode[] = [];
@@ -46,27 +47,80 @@ const TimelineRenderer: React.FC<{ markdownText: string }> = ({ markdownText }) 
     return <div className="timeline">{elements}</div>;
 };
 
-const HistoricalTimeline: React.FC<{ landmarkInfo: LandmarkInfo }> = ({ landmarkInfo }) => {
+
+interface HistoricalTimelineProps {
+  landmarkInfo: LandmarkInfo;
+  user: AppUser | null;
+  discoveryId: string;
+}
+
+const HistoricalTimeline: React.FC<HistoricalTimelineProps> = ({ landmarkInfo, user, discoveryId }) => {
   const [timeline, setTimeline] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getTimeline, cacheTimeline } = useCache();
+  const isFetching = useRef(false); // Ref to prevent double API calls
 
   useEffect(() => {
-    const getTimeline = async () => {
+    const fetchTimeline = async () => {
+      if (!user || !discoveryId) {
+        try {
+            const result = await generateTimeline(landmarkInfo);
+            setTimeline(result);
+        } catch (err: any) {
+            setError(err.message || "An error occurred while generating the timeline.");
+        } finally {
+            setIsLoading(false);
+        }
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      // 1. Check session cache
+      const cachedTimeline = getTimeline(discoveryId);
+      if (cachedTimeline) {
+        setTimeline(cachedTimeline);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Check Firestore
       try {
-        setIsLoading(true);
-        setError(null);
-        setTimeline(null);
-        const result = await generateTimeline(landmarkInfo);
-        setTimeline(result);
+        const discoveryDoc = await getDiscovery(user.uid, discoveryId);
+        if (discoveryDoc?.timeline) {
+          cacheTimeline(discoveryId, discoveryDoc.timeline);
+          setTimeline(discoveryDoc.timeline);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Error fetching discovery from Firestore:", err);
+      }
+
+      // 3. Generate new timeline, save, and cache
+      if (isFetching.current) {
+        return; // Exit if a fetch is already in progress
+      }
+
+      try {
+        isFetching.current = true; // Set the flag before the API call
+        const newTimeline = await generateTimeline(landmarkInfo);
+        setTimeline(newTimeline);
+        cacheTimeline(discoveryId, newTimeline);
+        updateDiscoveryWithTimeline(user.uid, discoveryId, newTimeline).catch(err => {
+            console.error("Failed to save timeline to Firestore:", err);
+        });
       } catch (err: any) {
         setError(err.message || "An error occurred while generating the timeline.");
       } finally {
         setIsLoading(false);
       }
     };
-    getTimeline();
-  }, [landmarkInfo]);
+
+    fetchTimeline();
+  }, [landmarkInfo, user, discoveryId, getTimeline, cacheTimeline]);
 
   return (
     <div className="p-4 md:p-6 bg-slate-800 rounded-b-lg min-h-[30rem]">
