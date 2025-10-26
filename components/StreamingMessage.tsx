@@ -12,12 +12,15 @@ const StreamingMessage: React.FC<StreamingMessageProps> = ({ text }) => {
 
     if (!text) return;
 
-    const words = text.split(/(\s+)/); // Split by space but keep the spaces
+    const words = text.split(/(\s+)/).filter(Boolean); // Split by space but keep the spaces
     let currentIndex = 0;
 
     const intervalId = setInterval(() => {
       if (currentIndex < words.length) {
-        setDisplayedText((prev) => prev + words[currentIndex]);
+        const word = words[currentIndex];
+        if (word) {
+          setDisplayedText((prev) => prev + word);
+        }
         currentIndex++;
       } else {
         clearInterval(intervalId);
