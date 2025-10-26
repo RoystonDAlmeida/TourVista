@@ -72,7 +72,7 @@ export async function fetchNearbyPlaces(landmarkName: string, coords: { latitude
         return {
             name: place.name,
             description: place.description,
-            uri: bestSource?.maps?.uri || '',
+            uri: bestSource?.maps?.uri || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${bestSource?.maps?.placeId || ''}`,
             title: bestSource?.maps?.title || place.name
         };
     }).filter(p => p.uri); // Only include places we could find a map link for
