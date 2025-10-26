@@ -7,6 +7,7 @@ import {
 } from '../services/firebaseService';
 import TypingIndicator from './TypingIndicator';
 import StreamingMessage from './StreamingMessage';
+import { useCache } from '../contexts/CacheContext';
 
 interface ChatProps {
   user: AppUser | null;
@@ -21,6 +22,7 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
   const [isConversationLoading, setIsConversationLoading] = useState(true);
   const [streamNextMessage, setStreamNextMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { getConversationId, cacheConversationId } = useCache();
 
   const isAiTyping = messages.length > 0 && messages[messages.length - 1].role === 'model' && messages[messages.length - 1].text === '...';
 
@@ -38,25 +40,38 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
       return;
     }
 
-    setIsConversationLoading(true);
     let unsubscribe: (() => void) | undefined;
 
     const setupConversation = async () => {
-      try {
-        const conversation = await getOrCreateConversation(user.uid, discoveryId);
-        setConversationId(conversation.id || null);
+      const cachedConversationId = getConversationId(discoveryId);
 
-        if (conversation.id) {
-          unsubscribe = listenToConversationMessages(user.uid, conversation.id, (fetchedMessages) => {
-            setMessages(fetchedMessages);
+      if (cachedConversationId) {
+        // If we have a cached ID, assume messages will load quickly from Firebase cache.
+        // Don't show the main "Loading chat..." overlay.
+        setIsConversationLoading(false);
+        setConversationId(cachedConversationId);
+        unsubscribe = listenToConversationMessages(user.uid, cachedConversationId, (fetchedMessages) => {
+          setMessages(fetchedMessages);
+        });
+      } else {
+        // If no cached ID, we must fetch it and show the loader.
+        setIsConversationLoading(true);
+        try {
+          const conversation = await getOrCreateConversation(user.uid, discoveryId);
+          if (conversation.id) {
+            cacheConversationId(discoveryId, conversation.id);
+            setConversationId(conversation.id);
+            unsubscribe = listenToConversationMessages(user.uid, conversation.id, (fetchedMessages) => {
+              setMessages(fetchedMessages);
+              setIsConversationLoading(false); // Hide loader once messages arrive
+            });
+          } else {
             setIsConversationLoading(false);
-          });
-        } else {
+          }
+        } catch (error) {
+          console.error("Error setting up conversation:", error);
           setIsConversationLoading(false);
         }
-      } catch (error) {
-        console.error("Error setting up conversation:", error);
-        setIsConversationLoading(false);
       }
     };
 
@@ -67,7 +82,7 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
         unsubscribe();
       }
     };
-  }, [user?.uid, discoveryId]);
+  }, [user?.uid, discoveryId, getConversationId, cacheConversationId]);
 
   // Effect to scroll to bottom of messages
   useEffect(() => {
