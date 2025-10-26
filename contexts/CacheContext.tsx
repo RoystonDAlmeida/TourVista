@@ -14,6 +14,8 @@ interface CacheContextType {
   cacheItineraries: (itineraries: SavedItinerary[]) => void;
   getCachedItineraries: () => SavedItinerary[] | undefined;
   clearItineraryCache: () => void;
+  cacheConversationId: (discoveryId: string, conversationId: string) => void;
+  getConversationId: (discoveryId: string) => string | undefined;
 }
 
 const CacheContext = createContext<CacheContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const CacheContext = createContext<CacheContextType | undefined>(undefined);
 const DISCOVERY_CACHE_KEY = 'discovery_cache';
 const DISCOVERY_LIST_CACHE_KEY = 'discovery_list_cache';
 const ITINERARY_CACHE_KEY = 'itinerary_cache';
+const CONVERSATION_ID_CACHE_KEY = 'conversation_id_cache';
 
 export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [discoveryCache, setDiscoveryCache] = useState<Map<string, CachedDiscovery>>(() => {
@@ -67,6 +70,16 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
+  const [conversationIdCache, setConversationIdCache] = useState<Map<string, string>>(() => {
+    try {
+      const item = window.sessionStorage.getItem(CONVERSATION_ID_CACHE_KEY);
+      return item ? new Map(JSON.parse(item)) : new Map();
+    } catch (error) {
+      console.error("Error reading conversation ID cache from sessionStorage", error);
+      return new Map();
+    }
+  });
+
   useEffect(() => {
     try {
       window.sessionStorage.setItem(DISCOVERY_CACHE_KEY, JSON.stringify(Array.from(discoveryCache.entries())));
@@ -98,6 +111,14 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error("Error writing itinerary cache to sessionStorage", error);
     }
   }, [cachedItineraries]);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(CONVERSATION_ID_CACHE_KEY, JSON.stringify(Array.from(conversationIdCache.entries())));
+    } catch (error) {
+      console.error("Error writing conversation ID cache to sessionStorage", error);
+    }
+  }, [conversationIdCache]);
 
   const cacheDiscovery = useCallback((id: string, discovery: CachedDiscovery) => {
     setDiscoveryCache(prevCache => {
@@ -131,8 +152,30 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setCachedItineraries(undefined);
   }, []);
 
+  const cacheConversationId = useCallback((discoveryId: string, conversationId: string) => {
+    setConversationIdCache(prevCache => {
+      const newCache = new Map(prevCache);
+      newCache.set(discoveryId, conversationId);
+      return newCache;
+    });
+  }, []);
+
+  const getConversationId = useCallback((discoveryId: string) => {
+    return conversationIdCache.get(discoveryId);
+  }, [conversationIdCache]);
+
   return (
-    <CacheContext.Provider value={{ cacheDiscovery, getDiscovery, cacheDiscoveryList, getDiscoveryList, cacheItineraries, getCachedItineraries, clearItineraryCache }}>
+    <CacheContext.Provider value={{
+      cacheDiscovery,
+      getDiscovery,
+      cacheDiscoveryList,
+      getDiscoveryList,
+      cacheItineraries,
+      getCachedItineraries,
+      clearItineraryCache,
+      cacheConversationId,
+      getConversationId,
+    }}>
       {children}
     </CacheContext.Provider>
   );
