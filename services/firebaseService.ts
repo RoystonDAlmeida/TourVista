@@ -25,8 +25,13 @@ import {
     deleteDoc,
     query,
     orderBy,
+    where,
+    limit,
+    updateDoc,
+    Timestamp,
+    onSnapshot
 } from 'firebase/firestore';
-import type { AppUser, SavedItinerary, SavedDiscovery } from '../types';
+import type { AppUser, SavedItinerary, SavedDiscovery, ChatMessage, Conversation } from '../types';
 
 // Create firebase config object
 const firebaseConfig = {
@@ -170,4 +175,84 @@ export const deleteDiscoveryForUser = async (userId: string, discoveryId: string
     const discoveryDocRef = doc(db, 'users', userId, 'discoveries', discoveryId);
     await deleteDoc(discoveryDocRef);
 };
+
+// --- Firestore Chat Management ---
+
+export const getOrCreateConversation = async (userId: string, discoveryId: string): Promise<Conversation> => {
+    const conversationsRef = collection(db, 'users', userId, 'conversations');
+    const q = query(conversationsRef, where('discoveryId', '==', discoveryId), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        const docSnapshot = querySnapshot.docs[0];
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            userId: data.userId,
+            discoveryId: data.discoveryId,
+            createdAt: data.createdAt.toDate(),
+            updatedAt: data.updatedAt.toDate(),
+        } as Conversation;
+    } else {
+        // Create a new conversation document with an empty history array.
+        // This provides a stable ID for the frontend listener.
+        const newConversationRef = doc(collection(db, 'users', userId, 'conversations'));
+        await setDoc(newConversationRef, {
+            userId,
+            discoveryId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            history: [], // Initialize history
+        });
+        
+        // Fetch the newly created doc to get its data and server-generated timestamps
+        const newDoc = await getDoc(newConversationRef);
+        const data = newDoc.data()!;
+
+        return {
+            id: newDoc.id,
+            userId: data.userId,
+            discoveryId: data.discoveryId,
+            createdAt: data.createdAt.toDate(),
+            updatedAt: data.updatedAt.toDate(),
+        } as Conversation;
+    }
+};
+
+/**
+ * Listens to a conversation document and provides the message history array.
+ * @param userId The user's ID.
+ * @param conversationId The ID of the conversation document.
+ * @param callback The callback to be invoked with the array of messages.
+ * @returns An unsubscribe function for the listener.
+ */
+export const listenToConversationMessages = (
+    userId: string,
+    conversationId: string,
+    callback: (messages: ChatMessage[]) => void
+): (() => void) => {
+    // Listen to the single conversation document, not the sub-collection
+    const conversationDocRef = doc(db, 'users', userId, 'conversations', conversationId);
+
+    return onSnapshot(conversationDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+            const conversationData = docSnapshot.data();
+            // The messages are now in the 'history' array field
+            const history = conversationData.history || [];
+
+            const messages: ChatMessage[] = history.map((msg: any, index: number) => ({
+                role: msg.role,
+                text: msg.text,
+                timestamp: msg.timestamp?.toDate(),
+                // Create a stable key using the index, as array items don't have unique IDs
+                key: `${docSnapshot.id}-${index}`,
+            }));
+            callback(messages);
+        } else {
+            // If the document doesn't exist, return an empty array
+            callback([]);
+        }
+    });
+};
+
 export { auth, db };
