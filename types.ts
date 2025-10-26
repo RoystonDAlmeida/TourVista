@@ -28,7 +28,16 @@ export interface LandmarkInfo {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
-  key: number;
+  key?: number; // Make key optional, as it's for UI rendering, not Firestore storage
+  timestamp?: Date; // Add timestamp for Firestore
+}
+
+export interface Conversation {
+  id?: string; // Firestore document ID
+  userId: string;
+  discoveryId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface NearbyPlace {
@@ -72,4 +81,5 @@ export interface SavedDiscovery {
   languages: Language[];
   createdAt: Date | string;
   imageUrl: string;
+  timeline?: string;
 }
