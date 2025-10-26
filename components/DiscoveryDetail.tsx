@@ -10,9 +10,10 @@ import { useCache } from '../contexts/CacheContext';
 
 interface DiscoveryDetailProps {
   user: AppUser | null;
+  onStartNewTour: () => void;
 }
 
-const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
+const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
   const { discoveryId } = useParams<{ discoveryId: string }>();
   const navigate = useNavigate();
   const [discovery, setDiscovery] = useState<{ landmarkInfo: LandmarkInfo; imageUrl: string; } | null>(null);
@@ -85,7 +86,13 @@ const DiscoveryDetail = ({ user }: DiscoveryDetailProps) => {
         imageUrl={discovery.imageUrl}
         discoveryId={discoveryId!}
       />
-      </div>
+      <button
+        onClick={onStartNewTour}
+        className="mt-8 px-6 py-2 bg-cyan-600 hover:bg-cyan-700 transition-colors rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+      >
+        Start New Tour
+      </button>
+    </div>
   );
 };
 
