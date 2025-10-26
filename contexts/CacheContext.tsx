@@ -16,6 +16,8 @@ interface CacheContextType {
   clearItineraryCache: () => void;
   cacheConversationId: (discoveryId: string, conversationId: string) => void;
   getConversationId: (discoveryId: string) => string | undefined;
+  cacheTimeline: (discoveryId: string, timeline: string) => void;
+  getTimeline: (discoveryId: string) => string | undefined;
 }
 
 const CacheContext = createContext<CacheContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ const DISCOVERY_CACHE_KEY = 'discovery_cache';
 const DISCOVERY_LIST_CACHE_KEY = 'discovery_list_cache';
 const ITINERARY_CACHE_KEY = 'itinerary_cache';
 const CONVERSATION_ID_CACHE_KEY = 'conversation_id_cache';
+const TIMELINE_CACHE_KEY = 'timeline_cache';
 
 export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [discoveryCache, setDiscoveryCache] = useState<Map<string, CachedDiscovery>>(() => {
@@ -80,6 +83,16 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
+  const [timelineCache, setTimelineCache] = useState<Map<string, string>>(() => {
+    try {
+      const item = window.sessionStorage.getItem(TIMELINE_CACHE_KEY);
+      return item ? new Map(JSON.parse(item)) : new Map();
+    } catch (error) {
+      console.error("Error reading timeline cache from sessionStorage", error);
+      return new Map();
+    }
+  });
+
   useEffect(() => {
     try {
       window.sessionStorage.setItem(DISCOVERY_CACHE_KEY, JSON.stringify(Array.from(discoveryCache.entries())));
@@ -119,6 +132,14 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error("Error writing conversation ID cache to sessionStorage", error);
     }
   }, [conversationIdCache]);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(TIMELINE_CACHE_KEY, JSON.stringify(Array.from(timelineCache.entries())));
+    } catch (error) {
+      console.error("Error writing timeline cache to sessionStorage", error);
+    }
+  }, [timelineCache]);
 
   const cacheDiscovery = useCallback((id: string, discovery: CachedDiscovery) => {
     setDiscoveryCache(prevCache => {
@@ -164,6 +185,18 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return conversationIdCache.get(discoveryId);
   }, [conversationIdCache]);
 
+  const cacheTimeline = useCallback((discoveryId: string, timeline: string) => {
+    setTimelineCache(prevCache => {
+      const newCache = new Map(prevCache);
+      newCache.set(discoveryId, timeline);
+      return newCache;
+    });
+  }, []);
+
+  const getTimeline = useCallback((discoveryId: string) => {
+    return timelineCache.get(discoveryId);
+  }, [timelineCache]);
+
   return (
     <CacheContext.Provider value={{
       cacheDiscovery,
@@ -175,6 +208,8 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       clearItineraryCache,
       cacheConversationId,
       getConversationId,
+      cacheTimeline,
+      getTimeline,
     }}>
       {children}
     </CacheContext.Provider>
