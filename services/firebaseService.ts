@@ -176,6 +176,31 @@ export const deleteDiscoveryForUser = async (userId: string, discoveryId: string
     await deleteDoc(discoveryDocRef);
 };
 
+export const getDiscovery = async (userId: string, discoveryId: string): Promise<SavedDiscovery | null> => {
+    const discoveryDocRef = doc(db, 'users', userId, 'discoveries', discoveryId);
+    const docSnapshot = await getDoc(discoveryDocRef);
+
+    if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            landmarkInfo: data.landmarkInfo,
+            languages: data.languages,
+            imageUrl: data.imageUrl,
+            createdAt: data.createdAt.toDate(),
+            timeline: data.timeline, // This field may be undefined, which is fine
+        } as SavedDiscovery;
+    }
+    return null;
+};
+
+export const updateDiscoveryWithTimeline = async (userId: string, discoveryId: string, timeline: string) => {
+    const discoveryDocRef = doc(db, 'users', userId, 'discoveries', discoveryId);
+    await updateDoc(discoveryDocRef, {
+        timeline: timeline,
+    });
+};
+
 // --- Firestore Chat Management ---
 
 export const getOrCreateConversation = async (userId: string, discoveryId: string): Promise<Conversation> => {
