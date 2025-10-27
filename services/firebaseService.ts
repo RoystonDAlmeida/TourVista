@@ -129,11 +129,29 @@ export const getItinerariesForUser = async (userId: string): Promise<SavedItiner
         const data = docSnapshot.data();
         return {
             id: docSnapshot.id,
-            landmarkName: data.landmarkName,
+            discoveryId: data.discoveryId,
             duration: data.duration,
             interests: data.interests,
             itineraryContent: data.itineraryContent,
             createdAt: data.createdAt.toDate(), // Convert Firestore Timestamp to JS Date
+        } as SavedItinerary;
+    });
+};
+
+export const getItinerariesForDiscovery = async (userId: string, discoveryId: string): Promise<SavedItinerary[]> => {
+    const itinerariesCollectionRef = collection(db, 'users', userId, 'itineraries');
+    const q = query(itinerariesCollectionRef, where('discoveryId', '==', discoveryId), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            discoveryId: data.discoveryId,
+            duration: data.duration,
+            interests: data.interests,
+            itineraryContent: data.itineraryContent,
+            createdAt: data.createdAt.toDate(),
         } as SavedItinerary;
     });
 };
