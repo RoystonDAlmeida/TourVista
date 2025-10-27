@@ -8,6 +8,7 @@ import type { SavedItinerary, SavedDiscovery } from '../types';
 import { useCache } from '../contexts/CacheContext.js';
 import { handleDeleteItinerary as deleteItineraryHandler, handleDeleteDiscovery as deleteDiscoveryHandler } from '../utils/deleteUtils.js';
 import ConfirmationDialog from './ConfirmationDialog.js';
+import ItineraryPreviewDialog from './ItineraryPreviewDialog.js';
 
 const LoadingSkeleton = () => (
   <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg animate-pulse">
@@ -30,6 +31,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
   const [itineraryToDelete, setItineraryToDelete] = useState<string | null>(null);
   const [isDiscoveryConfirmOpen, setIsDiscoveryConfirmOpen] = useState(false);
   const [discoveryToDelete, setDiscoveryToDelete] = useState<string | null>(null);
+  const [selectedItinerary, setSelectedItinerary] = useState<SavedItinerary | null>(null);
 
 
   useEffect(() => {
@@ -130,6 +132,14 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
     }
   };
 
+  const handleCardClick = (itinerary: SavedItinerary) => {
+    setSelectedItinerary(itinerary);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedItinerary(null);
+  };
+
 
   if (error) {
     return <div className="text-red-300 text-center p-4">{error}</div>;
@@ -180,7 +190,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
                 ...itinerary,
                 createdAt: typeof itinerary.createdAt === 'string' ? new Date(itinerary.createdAt) : itinerary.createdAt
               };
-              return <ItineraryCard key={itinerary.id} itinerary={itineraryWithDate} landmarkName={itinerary.landmarkName} onDelete={(e) => { e.stopPropagation(); openItineraryDeleteDialog(itinerary.id); }} />
+              return <ItineraryCard key={itinerary.id} itinerary={itineraryWithDate} landmarkName={itinerary.landmarkName} onClick={() => handleCardClick(itinerary)} onDelete={(e) => { e.stopPropagation(); openItineraryDeleteDialog(itinerary.id); }} />
             })}
           </div>
         ) : (
@@ -206,6 +216,12 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
         title="Delete Discovery"
         message="Are you sure you want to delete this discovery? This action cannot be undone."
       />
+      {selectedItinerary && (
+        <ItineraryPreviewDialog
+          itinerary={selectedItinerary}
+          onClose={handleCloseDialog}
+        />
+      )}
     </div>
   );
 };
