@@ -3,29 +3,25 @@ import { getLandmarkInfoFromImage, generateNarration, fetchSpokenLanguages } fro
 import { saveDiscoveryForUser, auth } from '../services/firebaseService';
 import type { LandmarkInfo, Language } from '../types';
 import { VOICES } from '../constants';
+import { v4 as uuidv4 } from 'uuid';
 
-const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
-
-// Function to upload image to ImgBB
-const uploadImageToImgBB = async (file: File): Promise<string> => {
+// Function to upload image to backend
+export const uploadImageToBackend = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('image', file);
 
-  const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/upload/image`, {
     method: 'POST',
     body: formData,
   });
 
   if (!response.ok) {
-    throw new Error('Failed to upload image to ImgBB');
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to upload image to backend');
   }
 
   const data = await response.json();
-  if (data.success) {
-    return data.data.url;
-  } else {
-    throw new Error(data.error.message || 'ImgBB upload failed');
-  }
+  return data.url;
 };
 
 export const useLandmarkProcessing = () => {
@@ -36,6 +32,7 @@ export const useLandmarkProcessing = () => {
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [audioData, setAudioData] = useState<string | null>(null);
+  const [discoveryId, setDiscoveryId] = useState<string | null>(null);
   
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([{ code: 'English', name: 'English' }]);
@@ -51,6 +48,7 @@ export const useLandmarkProcessing = () => {
     setAudioData(null);
     setAvailableLanguages([{ code: 'English', name: 'English' }]);
     setSelectedLanguage('English');
+    setDiscoveryId(null); // Reset discoveryId
   }, []);
 
   const processLandmarkInfoAndNarration = useCallback(async (file: File, language: string) => {
@@ -81,7 +79,7 @@ export const useLandmarkProcessing = () => {
   
     try {
       setLoadingMessage('Uploading image...');
-      const uploadedImageUrl = await uploadImageToImgBB(file);
+      const uploadedImageUrl = await uploadImageToBackend(file);
       setImageUrl(uploadedImageUrl); // Update with the remote URL
 
       setLoadingMessage('Identifying landmark & fetching info...');
@@ -101,13 +99,16 @@ export const useLandmarkProcessing = () => {
       ];
       setAvailableLanguages(uniqueLanguages);
 
+      let currentDiscoveryId = uuidv4(); // Generate a temporary ID
       if (auth.currentUser) {
-        await saveDiscoveryForUser(auth.currentUser.uid, { 
+        // If user is logged in, save to Firebase and get the real ID
+        currentDiscoveryId = await saveDiscoveryForUser(auth.currentUser.uid, { 
           landmarkInfo: initialInfo, 
           languages: uniqueLanguages,
           imageUrl: uploadedImageUrl,
         });
       }
+      setDiscoveryId(currentDiscoveryId); // Set the discoveryId in state
   
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
@@ -138,6 +139,7 @@ export const useLandmarkProcessing = () => {
     availableLanguages,
     selectedVoice,
     audioData,
+    discoveryId, // Return discoveryId
     
     // Actions
     setSelectedVoice,
