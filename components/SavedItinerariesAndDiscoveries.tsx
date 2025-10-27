@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { getItinerariesForUser, getDiscoveriesForUser, deleteItineraryForUser } from '../services/firebaseService.js';
+import { getItinerariesForUser, getDiscoveriesForUser } from '../services/firebaseService.js';
 import type { AppUser } from '../types.js';
 import { BookmarkSquareIcon, CameraIcon } from './icons.js';
 import ItineraryCard from './ItineraryCard.js';
 import DiscoveryCard from './DiscoveryCard.js';
 import type { SavedItinerary, SavedDiscovery } from '../types';
 import { useCache } from '../contexts/CacheContext.js';
+import { handleDeleteItinerary as deleteItineraryHandler, handleDeleteDiscovery as deleteDiscoveryHandler } from '../utils/deleteUtils.js';
+import ConfirmationDialog from './ConfirmationDialog.js';
 
 const LoadingSkeleton = () => (
   <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg animate-pulse">
@@ -23,16 +25,21 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
   const [error, setError] = useState<string | null>(null);
   const { cacheDiscovery, getDiscovery, cacheDiscoveryList, getDiscoveryList, getCachedItineraries, cacheItineraries, clearItineraryCache } = useCache();
 
+  // State for delete confirmations
+  const [isItineraryConfirmOpen, setIsItineraryConfirmOpen] = useState(false);
+  const [itineraryToDelete, setItineraryToDelete] = useState<string | null>(null);
+  const [isDiscoveryConfirmOpen, setIsDiscoveryConfirmOpen] = useState(false);
+  const [discoveryToDelete, setDiscoveryToDelete] = useState<string | null>(null);
+
+
   useEffect(() => {
     const fetchItineraries = async () => {
       const cachedData = getCachedItineraries();
       if (cachedData) {
-        // Check if itineraries are present in cache
         setItineraries(cachedData);
         setIsLoadingItineraries(false);
         return;
       }
-
       try {
         setIsLoadingItineraries(true);
         const userItineraries = await getItinerariesForUser(user.uid);
@@ -40,10 +47,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
           ...itinerary,
           createdAt: itinerary.createdAt.toString(),
         }));
-
         setItineraries(userItineraries);
-
-        // Cache itineraries after fetching from DB
         cacheItineraries(serializableItineraries);
       } catch (err) {
         console.error("Error fetching itineraries:", err);
@@ -56,12 +60,10 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
     const fetchDiscoveries = async () => {
       const cachedList = getDiscoveryList();
       if (cachedList) {
-        // Check if user discoveries are cached
         setDiscoveries(cachedList);
         setIsLoadingDiscoveries(false);
         return;
       }
-
       try {
         if (!cachedList) {
           setIsLoadingDiscoveries(true);
@@ -72,8 +74,6 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
           createdAt: discovery.createdAt.toString(),
         }));
         setDiscoveries(userDiscoveries);
-
-        // cache discoveries list after fetching from DB
         cacheDiscoveryList(serializableDiscoveries);
         userDiscoveries.forEach(discovery => {
           cacheDiscovery(discovery.id, {
@@ -93,17 +93,43 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
     fetchDiscoveries();
   }, [user.uid, cacheDiscovery, cacheDiscoveryList, getDiscoveryList, getCachedItineraries, cacheItineraries]);
 
-  const handleDeleteItinerary = async (itineraryId: string) => {
-    if (!window.confirm("Are you sure you want to delete this trip?")) return;
-    try {
-      await deleteItineraryForUser(user.uid, itineraryId);
-      setItineraries(prev => prev.filter(item => item.id !== itineraryId));
-      clearItineraryCache();
-    } catch (error) {
-      console.error("Error deleting itinerary:", error);
-      setError("Failed to delete trip. Please try again.");
+  // Itinerary Delete Logic
+  const openItineraryDeleteDialog = (itineraryId: string) => {
+    setItineraryToDelete(itineraryId);
+    setIsItineraryConfirmOpen(true);
+  };
+
+  const confirmItineraryDelete = () => {
+    if (itineraryToDelete) {
+      const onSuccess = () => {
+        setItineraries(prev => prev.filter(item => item.id !== itineraryToDelete));
+        clearItineraryCache();
+        setIsItineraryConfirmOpen(false);
+        setItineraryToDelete(null);
+      };
+      deleteItineraryHandler(user.uid, itineraryToDelete, onSuccess, (message) => setError(message));
     }
   };
+
+  // Discovery Delete Logic
+  const openDiscoveryDeleteDialog = (discoveryId: string) => {
+    setDiscoveryToDelete(discoveryId);
+    setIsDiscoveryConfirmOpen(true);
+  };
+
+  const confirmDiscoveryDelete = () => {
+    if (discoveryToDelete) {
+      const onSuccess = () => {
+          const updatedDiscoveries = discoveries.filter(d => d.id !== discoveryToDelete);
+          setDiscoveries(updatedDiscoveries);
+          cacheDiscoveryList(updatedDiscoveries.map(d => ({ ...d, createdAt: d.createdAt.toString() })));
+          setIsDiscoveryConfirmOpen(false);
+          setDiscoveryToDelete(null);
+      };
+      deleteDiscoveryHandler(user.uid, discoveryToDelete, onSuccess, (message) => setError(message));
+    }
+  };
+
 
   if (error) {
     return <div className="text-red-300 text-center p-4">{error}</div>;
@@ -127,7 +153,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
                 ...discovery,
                 createdAt: typeof discovery.createdAt === 'string' ? new Date(discovery.createdAt) : discovery.createdAt
               };
-              return <DiscoveryCard key={discovery.id} discovery={discoveryWithDate} onDelete={() => {}} />
+              return <DiscoveryCard key={discovery.id} discovery={discoveryWithDate} onDelete={(e) => { e.stopPropagation(); openDiscoveryDeleteDialog(discovery.id); }} />
             })}
           </div>
         ) : (
@@ -154,7 +180,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
                 ...itinerary,
                 createdAt: typeof itinerary.createdAt === 'string' ? new Date(itinerary.createdAt) : itinerary.createdAt
               };
-              return <ItineraryCard key={itinerary.id} itinerary={itineraryWithDate} onDelete={() => handleDeleteItinerary(itinerary.id)} />
+              return <ItineraryCard key={itinerary.id} itinerary={itineraryWithDate} landmarkName={itinerary.landmarkName} onDelete={(e) => { e.stopPropagation(); openItineraryDeleteDialog(itinerary.id); }} />
             })}
           </div>
         ) : (
@@ -164,6 +190,22 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={isItineraryConfirmOpen}
+        onClose={() => setIsItineraryConfirmOpen(false)}
+        onConfirm={confirmItineraryDelete}
+        title="Delete Itinerary"
+        message="Are you sure you want to delete this itinerary? This action cannot be undone."
+      />
+
+      <ConfirmationDialog
+        isOpen={isDiscoveryConfirmOpen}
+        onClose={() => setIsDiscoveryConfirmOpen(false)}
+        onConfirm={confirmDiscoveryDelete}
+        title="Delete Discovery"
+        message="Are you sure you want to delete this discovery? This action cannot be undone."
+      />
     </div>
   );
 };
