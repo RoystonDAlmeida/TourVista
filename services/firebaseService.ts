@@ -31,7 +31,7 @@ import {
     Timestamp,
     onSnapshot
 } from 'firebase/firestore';
-import type { AppUser, SavedItinerary, SavedDiscovery, ChatMessage, Conversation } from '../types';
+import type { AppUser, SavedItinerary, SavedDiscovery, ChatMessage, Conversation, NearbyPlace } from '../types';
 
 // Create firebase config object
 const firebaseConfig = {
@@ -44,7 +44,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -152,6 +152,33 @@ export const saveDiscoveryForUser = async (userId: string, discoveryData: object
         createdAt: serverTimestamp(),
     });
     return docRef.id;
+};
+
+export const saveNearbyPlaceForUser = async (userId: string, nearbyPlaceData: Omit<NearbyPlace, 'id' | 'createdAt'>): Promise<string> => {
+    const nearbyPlacesCollectionRef = collection(db, 'users', userId, 'nearbyPlaces');
+    const docRef = await addDoc(nearbyPlacesCollectionRef, {
+        ...nearbyPlaceData,
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+};
+
+export const getNearbyPlacesForUser = async (userId: string): Promise<NearbyPlace[]> => {
+    const nearbyPlacesCollectionRef = collection(db, 'users', userId, 'nearbyPlaces');
+    const q = query(nearbyPlacesCollectionRef, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            createdAt: data.createdAt.toDate(),
+            description: data.description,
+            name: data.name,
+            title: data.title,
+            uri: data.uri,
+        } as NearbyPlace;
+    });
 };
 
 export const getDiscoveriesForUser = async (userId: string): Promise<SavedDiscovery[]> => {
