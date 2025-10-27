@@ -232,6 +232,11 @@ export const deleteDiscoveryForUser = async (userId: string, discoveryId: string
     await deleteDoc(discoveryDocRef);
 };
 
+export const deletePostcardForUser = async (userId: string, postcardId: string) => {
+    const postcardDocRef = doc(db, 'users', userId, 'postcards', postcardId);
+    await deleteDoc(postcardDocRef);
+};
+
 export const getDiscovery = async (userId: string, discoveryId: string): Promise<SavedDiscovery | null> => {
     const discoveryDocRef = doc(db, 'users', userId, 'discoveries', discoveryId);
     const docSnapshot = await getDoc(discoveryDocRef);
