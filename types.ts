@@ -70,7 +70,7 @@ export interface AppUser {
 
 export interface SavedItinerary {
   id: string;
-  landmarkName: string;
+  discoveryId: string;
   duration: string;
   interests: string;
   itineraryContent: string;
@@ -84,4 +84,13 @@ export interface SavedDiscovery {
   createdAt: Date | string;
   imageUrl: string;
   timeline?: string;
+}
+
+export interface Postcard {
+  id: string;
+  imageUrl: string;
+  stylePrompt: string;
+  originalImageUrl?: string;
+  createdAt: Date | string;
+  discoveryId?: string; // New field to associate with a discovery
 }
