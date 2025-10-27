@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../icons';
 
 interface PlacesCarouselProps {
   places: NearbyPlace[];
-  onShowOnMap: (title: string) => void;
+  onShowOnMap: (name: string, latitude: number, longitude: number) => void;
 }
 
 export const PlacesCarousel: React.FC<PlacesCarouselProps> = ({ places, onShowOnMap }) => {
@@ -50,7 +50,10 @@ export const PlacesCarousel: React.FC<PlacesCarouselProps> = ({ places, onShowOn
       <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style={{scrollSnapType: 'x mandatory'}}>
         {places.map(place => (
           <div key={place.title} className="snap-start">
-            <PlaceCard place={place} onShowOnMap={onShowOnMap} />
+            <PlaceCard 
+              place={place} 
+              onShowOnMap={onShowOnMap} 
+            />
           </div>
         ))}
       </div>
@@ -63,3 +66,5 @@ export const PlacesCarousel: React.FC<PlacesCarouselProps> = ({ places, onShowOn
     </div>
   );
 };
+
+export default PlacesCarousel;
