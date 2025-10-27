@@ -87,7 +87,10 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSignUpClick, onAuthenticated,
                 </div>
             </div>
 
-            <OAuthButtons onAuthenticated={onAuthenticated} />
+            <OAuthButtons onAuthenticated={() => {
+                showSuccessToast('Welcome back! You have been signed in successfully with Google.');
+                onAuthenticated();
+            }} />
             
             <p className="text-center text-sm text-slate-400">
                 Don't have an account?{' '}
