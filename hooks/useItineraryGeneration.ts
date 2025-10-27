@@ -30,6 +30,7 @@ export const useItineraryGeneration = ({ user, landmarkInfo, discoveryId }: UseI
       // Save to Firestore
       await saveItineraryForUser(user.uid, {
           discoveryId: discoveryId,
+          landmarkName: landmarkInfo.name, // Added landmarkName
           duration,
           interests,
           itineraryContent: result
