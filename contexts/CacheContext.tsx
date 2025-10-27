@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import type { LandmarkInfo, SavedDiscovery, SavedItinerary, NearbyPlace } from '../types';
+import type { LandmarkInfo, SavedDiscovery, SavedItinerary, NearbyPlace, Postcard } from '../types';
 
 interface CachedDiscovery {
   landmarkInfo: LandmarkInfo;
@@ -20,6 +21,9 @@ interface CacheContextType {
   getTimeline: (discoveryId: string) => string | undefined;
   cacheNearbyPlaces: (queryKey: string, places: NearbyPlace[]) => void;
   getNearbyPlaces: (queryKey: string) => NearbyPlace[] | undefined;
+  cachePostcards: (postcards: Postcard[]) => void;
+  getCachedPostcards: () => Postcard[] | undefined;
+  clearPostcardCache: () => void;
 }
 
 const CacheContext = createContext<CacheContextType | undefined>(undefined);
@@ -27,6 +31,7 @@ const CacheContext = createContext<CacheContextType | undefined>(undefined);
 const DISCOVERY_CACHE_KEY = 'discovery_cache';
 const DISCOVERY_LIST_CACHE_KEY = 'discovery_list_cache';
 const ITINERARY_CACHE_KEY = 'itinerary_cache';
+const POSTCARD_CACHE_KEY = 'postcard_cache';
 const CONVERSATION_ID_CACHE_KEY = 'conversation_id_cache';
 const TIMELINE_CACHE_KEY = 'timeline_cache';
 const NEARBY_PLACES_CACHE_KEY = 'nearby_places_cache';
@@ -72,6 +77,19 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       return undefined;
     } catch (error) {
       console.error("Error reading itinerary cache from sessionStorage", error);
+      return undefined;
+    }
+  });
+
+  const [cachedPostcards, setCachedPostcards] = useState<Postcard[] | undefined>(() => {
+    try {
+      const item = window.sessionStorage.getItem(POSTCARD_CACHE_KEY);
+      if (item) {
+        return JSON.parse(item);
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error reading postcard cache from sessionStorage", error);
       return undefined;
     }
   });
@@ -140,6 +158,18 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     try {
+      if (cachedPostcards) {
+        window.sessionStorage.setItem(POSTCARD_CACHE_KEY, JSON.stringify(cachedPostcards));
+      } else {
+        window.sessionStorage.removeItem(POSTCARD_CACHE_KEY);
+      }
+    } catch (error) {
+      console.error("Error writing postcard cache to sessionStorage", error);
+    }
+  }, [cachedPostcards]);
+
+  useEffect(() => {
+    try {
       window.sessionStorage.setItem(CONVERSATION_ID_CACHE_KEY, JSON.stringify(Array.from(conversationIdCache.entries())));
     } catch (error) {
       console.error("Error writing conversation ID cache to sessionStorage", error);
@@ -194,6 +224,18 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setCachedItineraries(undefined);
   }, []);
 
+  const cachePostcards = useCallback((postcards: Postcard[]) => {
+    setCachedPostcards(postcards);
+  }, []);
+
+  const getCachedPostcards = useCallback(() => {
+    return cachedPostcards;
+  }, [cachedPostcards]);
+
+  const clearPostcardCache = useCallback(() => {
+    setCachedPostcards(undefined);
+  }, []);
+
   const cacheConversationId = useCallback((discoveryId: string, conversationId: string) => {
     setConversationIdCache(prevCache => {
       const newCache = new Map(prevCache);
@@ -245,6 +287,9 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       getTimeline,
       cacheNearbyPlaces,
       getNearbyPlaces,
+      cachePostcards,
+      getCachedPostcards,
+      clearPostcardCache,
     }}>
       {children}
     </CacheContext.Provider>
