@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import type { LandmarkInfo, SavedDiscovery, SavedItinerary, NearbyPlace, Postcard } from '../types';
 
@@ -209,16 +208,42 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const getDiscoveryList = useCallback(() => {
-    return cachedDiscoveryList;
-  }, [cachedDiscoveryList]);
+    try {
+      const item = window.sessionStorage.getItem(DISCOVERY_LIST_CACHE_KEY);
+      if (item) {
+        const parsed = JSON.parse(item);
+        return parsed.map((discovery: any) => ({
+          ...discovery,
+          createdAt: new Date(discovery.createdAt),
+        }));
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error reading discovery list cache from sessionStorage", error);
+      return undefined;
+    }
+  }, []);
 
   const cacheItineraries = useCallback((itineraries: SavedItinerary[]) => {
     setCachedItineraries(itineraries);
   }, []);
 
   const getCachedItineraries = useCallback(() => {
-    return cachedItineraries;
-  }, [cachedItineraries]);
+    try {
+      const item = window.sessionStorage.getItem(ITINERARY_CACHE_KEY);
+      if (item) {
+        const parsed = JSON.parse(item);
+        return parsed.map((itinerary: any) => ({
+          ...itinerary,
+          createdAt: new Date(itinerary.createdAt),
+        }));
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error reading itinerary cache from sessionStorage", error);
+      return undefined;
+    }
+  }, []);
 
   const clearItineraryCache = useCallback(() => {
     setCachedItineraries(undefined);
@@ -229,8 +254,17 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   const getCachedPostcards = useCallback(() => {
-    return cachedPostcards;
-  }, [cachedPostcards]);
+    try {
+      const item = window.sessionStorage.getItem(POSTCARD_CACHE_KEY);
+      if (item) {
+        return JSON.parse(item);
+      }
+      return undefined;
+    } catch (error) {
+      console.error("Error reading postcard cache from sessionStorage", error);
+      return undefined;
+    }
+  }, []);
 
   const clearPostcardCache = useCallback(() => {
     setCachedPostcards(undefined);
