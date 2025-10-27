@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { generatePostcard } from '../services/geminiService';
+import { savePostcardForUser, auth } from '../services/firebaseService';
+import { uploadImageToBackend } from '../hooks/useLandmarkProcessing';
 import Loader from './Loader';
 import { SparklesIcon, DownloadIcon, ShareIcon } from './icons';
 
 interface PostcardCreatorProps {
   editedImageDataUrl: string | null;
+  discoveryId?: string; // Accept discoveryId prop
 }
 
 const dataUrlToBlob = (dataUrl: string): Blob => {
@@ -19,7 +22,7 @@ const dataUrlToBlob = (dataUrl: string): Blob => {
     return new Blob([u8arr], {type:mime});
 }
 
-const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl }) => {
+const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl, discoveryId }) => {
   const [stylePrompt, setStylePrompt] = useState('a vibrant watercolor painting');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +41,22 @@ const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl })
         const editedImageFile = new File([blob], "edited_landmark.jpg", { type: "image/jpeg" });
 
         const base64Image = await generatePostcard(editedImageFile, stylePrompt);
-        setGeneratedImage(`data:image/png;base64,${base64Image}`);
+        const generatedImageBlob = dataUrlToBlob(`data:image/png;base64,${base64Image}`);
+        const generatedImageFile = new File([generatedImageBlob], "generated_postcard.png", { type: "image/png" });
+        
+        // Upload the generated image to imgbb
+        const uploadedGeneratedImageUrl = await uploadImageToBackend(generatedImageFile);
+        setGeneratedImage(uploadedGeneratedImageUrl); // Set the generated image URL from imgbb
+
+        // Save postcard to Firebase
+        if (auth.currentUser) {
+            await savePostcardForUser(auth.currentUser.uid, {
+                imageUrl: uploadedGeneratedImageUrl,
+                stylePrompt: stylePrompt,
+                originalImageUrl: editedImageDataUrl || undefined, // Pass the edited image URL if available
+                discoveryId: discoveryId || undefined, // Pass the discoveryId if available
+            });
+        }
 
     } catch (err: any) {
       setError(err.message || "An error occurred while generating the postcard.");
@@ -50,8 +68,9 @@ const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl })
   const handleShare = async () => {
     if (generatedImage && navigator.share) {
         try {
-            const blob = dataUrlToBlob(generatedImage);
-            const file = new File([blob], 'postcard.png', { type: 'image/png' });
+            const response = await fetch(generatedImage);
+            const blob = await response.blob();
+            const file = new File([blob], 'postcard.png', { type: blob.type });
             await navigator.share({
                 title: 'My TourVista Postcard',
                 text: `Check out this postcard I made with TourVista!`,
