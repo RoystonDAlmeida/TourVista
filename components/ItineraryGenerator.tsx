@@ -23,10 +23,13 @@ const ItineraryGenerator: React.FC<{ user: AppUser; landmarkInfo: LandmarkInfo; 
       <p className="text-slate-400 mb-6">Tell us your interests, and we'll create a custom tour plan starting from {landmarkInfo.name}.</p>
       
       {/* Display all generated itineraries */}
-      <ItineraryDisplay
-        userId={user.uid}
-        discoveryId={discoveryId}
-      />
+      <div className="mb-8">
+        <ItineraryDisplay
+          userId={user.uid}
+          discoveryId={discoveryId}
+          landmarkName={landmarkInfo.name}
+        />
+      </div>
 
       <ItineraryForm
         duration={duration}
