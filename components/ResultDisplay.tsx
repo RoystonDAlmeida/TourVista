@@ -31,15 +31,15 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ user, imageUrl, landmarkI
       case 'tour':
         return <TourGuideTab landmarkInfo={landmarkInfo} audioData={audioData} />;
       case 'timeline':
-        return <HistoricalTimeline landmarkInfo={landmarkInfo} />;
+        return <HistoricalTimeline landmarkInfo={landmarkInfo} user={user} discoveryId={discoveryId} />;
       case 'chat':
         return <ChatTab user={user} discoveryId={discoveryId} />;
       case 'nearby':
         return <NearbyPlaces landmarkInfo={landmarkInfo} />;
       case 'postcard':
-        return <PostcardGenerator imageUrl={imageUrl} />;
+        return <PostcardGenerator imageUrl={imageUrl} discoveryId={discoveryId} />;
       case 'itinerary':
-        return <ItineraryTab user={user} landmarkInfo={landmarkInfo} />;
+        return <ItineraryTab user={user} landmarkInfo={landmarkInfo} discoveryId={discoveryId} />;
       case 'trips':
         return user ? <SavedItinerariesAndDiscoveries user={user} /> : null;
       default:
