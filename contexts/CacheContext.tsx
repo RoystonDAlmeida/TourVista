@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import type { LandmarkInfo, SavedDiscovery, SavedItinerary } from '../types';
+import type { LandmarkInfo, SavedDiscovery, SavedItinerary, NearbyPlace } from '../types';
 
 interface CachedDiscovery {
   landmarkInfo: LandmarkInfo;
@@ -18,6 +18,8 @@ interface CacheContextType {
   getConversationId: (discoveryId: string) => string | undefined;
   cacheTimeline: (discoveryId: string, timeline: string) => void;
   getTimeline: (discoveryId: string) => string | undefined;
+  cacheNearbyPlaces: (queryKey: string, places: NearbyPlace[]) => void;
+  getNearbyPlaces: (queryKey: string) => NearbyPlace[] | undefined;
 }
 
 const CacheContext = createContext<CacheContextType | undefined>(undefined);
@@ -27,6 +29,7 @@ const DISCOVERY_LIST_CACHE_KEY = 'discovery_list_cache';
 const ITINERARY_CACHE_KEY = 'itinerary_cache';
 const CONVERSATION_ID_CACHE_KEY = 'conversation_id_cache';
 const TIMELINE_CACHE_KEY = 'timeline_cache';
+const NEARBY_PLACES_CACHE_KEY = 'nearby_places_cache';
 
 export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [discoveryCache, setDiscoveryCache] = useState<Map<string, CachedDiscovery>>(() => {
@@ -93,6 +96,16 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
+  const [nearbyPlacesCache, setNearbyPlacesCache] = useState<Map<string, NearbyPlace[]>>(() => {
+    try {
+      const item = window.sessionStorage.getItem(NEARBY_PLACES_CACHE_KEY);
+      return item ? new Map(JSON.parse(item)) : new Map();
+    } catch (error) {
+      console.error("Error reading nearby places cache from sessionStorage", error);
+      return new Map();
+    }
+  });
+
   useEffect(() => {
     try {
       window.sessionStorage.setItem(DISCOVERY_CACHE_KEY, JSON.stringify(Array.from(discoveryCache.entries())));
@@ -140,6 +153,14 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error("Error writing timeline cache to sessionStorage", error);
     }
   }, [timelineCache]);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(NEARBY_PLACES_CACHE_KEY, JSON.stringify(Array.from(nearbyPlacesCache.entries())));
+    } catch (error) {
+      console.error("Error writing nearby places cache to sessionStorage", error);
+    }
+  }, [nearbyPlacesCache]);
 
   const cacheDiscovery = useCallback((id: string, discovery: CachedDiscovery) => {
     setDiscoveryCache(prevCache => {
@@ -197,6 +218,18 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return timelineCache.get(discoveryId);
   }, [timelineCache]);
 
+  const cacheNearbyPlaces = useCallback((queryKey: string, places: NearbyPlace[]) => {
+    setNearbyPlacesCache(prevCache => {
+      const newCache = new Map(prevCache);
+      newCache.set(queryKey, places);
+      return newCache;
+    });
+  }, []);
+
+  const getNearbyPlaces = useCallback((queryKey: string) => {
+    return nearbyPlacesCache.get(queryKey);
+  }, [nearbyPlacesCache]);
+
   return (
     <CacheContext.Provider value={{
       cacheDiscovery,
@@ -210,6 +243,8 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       getConversationId,
       cacheTimeline,
       getTimeline,
+      cacheNearbyPlaces,
+      getNearbyPlaces,
     }}>
       {children}
     </CacheContext.Provider>
