@@ -71,6 +71,7 @@ export interface AppUser {
 export interface SavedItinerary {
   id: string;
   discoveryId: string;
+  landmarkName: string; // Added landmarkName
   duration: string;
   interests: string;
   itineraryContent: string;
