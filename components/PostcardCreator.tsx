@@ -4,6 +4,7 @@ import { savePostcardForUser, auth } from '../services/firebaseService';
 import { uploadImageToBackend } from '../hooks/useLandmarkProcessing';
 import Loader from './Loader';
 import { SparklesIcon, DownloadIcon, ShareIcon } from './icons';
+import { useCache } from '../contexts/CacheContext';
 
 interface PostcardCreatorProps {
   editedImageDataUrl: string | null;
@@ -27,6 +28,7 @@ const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl, d
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { clearPostcardCache } = useCache();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +58,7 @@ const PostcardCreator: React.FC<PostcardCreatorProps> = ({ editedImageDataUrl, d
                 originalImageUrl: editedImageDataUrl || undefined, // Pass the edited image URL if available
                 discoveryId: discoveryId || undefined, // Pass the discoveryId if available
             });
+            clearPostcardCache(); // Clear the postcard cache after saving a new postcard
         }
 
     } catch (err: any) {
