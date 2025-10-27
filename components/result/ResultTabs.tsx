@@ -1,7 +1,7 @@
 import React from 'react';
 import type { AppUser } from '../../types';
 import { TabButton } from './TabButton';
-import { BookOpenIcon, ChatBubbleLeftRightIcon, MapPinIcon, SparklesIcon, CalendarDaysIcon, HourglassIcon, BookmarkSquareIcon } from '../icons';
+import { BookOpenIcon, ChatBubbleLeftRightIcon, MapPinIcon, SparklesIcon, CalendarDaysIcon, HourglassIcon } from '../icons';
 
 export type Tab = 'tour' | 'timeline' | 'chat' | 'nearby' | 'postcard' | 'itinerary' | 'trips';
 
@@ -19,6 +19,5 @@ export const ResultTabs: React.FC<ResultTabsProps> = ({ user, activeTab, setActi
         <TabButton label="Nearby" icon={<MapPinIcon className="w-5 h-5"/>} isActive={activeTab === 'nearby'} onClick={() => setActiveTab('nearby')} />
         <TabButton label="Create Postcard" icon={<SparklesIcon className="w-5 h-5"/>} isActive={activeTab === 'postcard'} onClick={() => setActiveTab('postcard')} />
         <TabButton label="Itinerary" icon={<CalendarDaysIcon className="w-5 h-5"/>} isActive={activeTab === 'itinerary'} onClick={() => setActiveTab('itinerary')} />
-        {user && <TabButton label="My Trips" icon={<BookmarkSquareIcon className="w-5 h-5"/>} isActive={activeTab === 'trips'} onClick={() => setActiveTab('trips')} />}
     </div>
 );
