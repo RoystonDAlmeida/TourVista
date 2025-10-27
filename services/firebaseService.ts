@@ -28,10 +28,9 @@ import {
     where,
     limit,
     updateDoc,
-    Timestamp,
     onSnapshot
 } from 'firebase/firestore';
-import type { AppUser, SavedItinerary, SavedDiscovery, ChatMessage, Conversation, NearbyPlace } from '../types';
+import type { AppUser, SavedItinerary, SavedDiscovery, ChatMessage, Conversation, NearbyPlace, Postcard } from '../types';
 
 // Create firebase config object
 const firebaseConfig = {
@@ -154,6 +153,15 @@ export const saveDiscoveryForUser = async (userId: string, discoveryData: object
     return docRef.id;
 };
 
+export const savePostcardForUser = async (userId: string, postcardData: { imageUrl: string; stylePrompt: string; originalImageUrl?: string; discoveryId?: string; }): Promise<string> => {
+    const postcardsCollectionRef = collection(db, 'users', userId, 'postcards');
+    const docRef = await addDoc(postcardsCollectionRef, {
+        ...postcardData,
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+};
+
 export const saveNearbyPlaceForUser = async (userId: string, nearbyPlaceData: Omit<NearbyPlace, 'id' | 'createdAt'>): Promise<string> => {
     const nearbyPlacesCollectionRef = collection(db, 'users', userId, 'nearbyPlaces');
     const docRef = await addDoc(nearbyPlacesCollectionRef, {
@@ -195,6 +203,27 @@ export const getDiscoveriesForUser = async (userId: string): Promise<SavedDiscov
             imageUrl: data.imageUrl, // Add this line
             createdAt: data.createdAt.toDate(),
         } as SavedDiscovery;
+    });
+};
+
+export const getPostcardsForUser = async (userId: string, discoveryId?: string): Promise<Postcard[]> => {
+    const postcardsCollectionRef = collection(db, 'users', userId, 'postcards');
+    let q = query(postcardsCollectionRef, orderBy('createdAt', 'desc'));
+
+    if (discoveryId) {
+        q = query(q, where('discoveryId', '==', discoveryId));
+    }
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(docSnapshot => {
+        const data = docSnapshot.data();
+        return {
+            id: docSnapshot.id,
+            imageUrl: data.imageUrl,
+            stylePrompt: data.stylePrompt,
+            originalImageUrl: data.originalImageUrl,
+            createdAt: data.createdAt.toDate(),
+        } as Postcard;
     });
 };
 
