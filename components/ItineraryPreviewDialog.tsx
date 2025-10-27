@@ -1,16 +1,12 @@
 import React from 'react';
 import { InteractiveItinerary } from './InteractiveItinerary';
-import ConfirmationDialog from './ConfirmationDialog';
 import { SavedItinerary } from '../types';
 
 interface ItineraryPreviewDialogProps {
   isOpen: boolean;
   onClose: () => void;
   itinerary: SavedItinerary | null;
-  onDelete: (itineraryId: string) => void;
-  showDeleteConfirm: boolean;
-  setShowDeleteConfirm: (show: boolean) => void;
-  confirmDelete: () => void;
+  onDelete: () => void;
 }
 
 const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
@@ -18,9 +14,6 @@ const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
   onClose,
   itinerary,
   onDelete,
-  showDeleteConfirm,
-  setShowDeleteConfirm,
-  confirmDelete,
 }) => {
   if (!isOpen || !itinerary) return null;
 
@@ -38,7 +31,7 @@ const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
         </div>
         <div className="p-4 border-t border-slate-700 flex justify-end gap-2">
           <button
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={onDelete}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Delete Itinerary
@@ -51,14 +44,6 @@ const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
           </button>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDelete}
-        title="Delete Itinerary"
-        message="Are you sure you want to delete this itinerary? This action cannot be undone."
-      />
     </div>
   );
 };
