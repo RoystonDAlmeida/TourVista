@@ -124,12 +124,13 @@ export const getItinerariesForUser = async (userId: string): Promise<SavedItiner
     const itinerariesCollectionRef = collection(db, 'users', userId, 'itineraries');
     const q = query(itinerariesCollectionRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    
+
     return querySnapshot.docs.map(docSnapshot => {
         const data = docSnapshot.data();
         return {
             id: docSnapshot.id,
             discoveryId: data.discoveryId,
+            landmarkName: data.landmarkName,
             duration: data.duration,
             interests: data.interests,
             itineraryContent: data.itineraryContent,
@@ -148,6 +149,7 @@ export const getItinerariesForDiscovery = async (userId: string, discoveryId: st
         return {
             id: docSnapshot.id,
             discoveryId: data.discoveryId,
+            landmarkName: data.landmarkName,
             duration: data.duration,
             interests: data.interests,
             itineraryContent: data.itineraryContent,
