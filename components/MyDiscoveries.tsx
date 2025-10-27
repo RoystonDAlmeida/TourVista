@@ -7,6 +7,7 @@ import ErrorDisplay from './ErrorDisplay';
 import type { AppUser, SavedDiscovery } from '../types';
 import { useCache } from '../contexts/CacheContext';
 import { handleDeleteDiscovery as deleteDiscoveryHandler } from '../utils/deleteUtils';
+import ConfirmationDialog from './ConfirmationDialog';
 
 interface MyDiscoveriesProps {
   user: AppUser | null;
@@ -18,6 +19,8 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
   const [discoveries, setDiscoveries] = useState<SavedDiscovery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDiscoveryConfirmOpen, setIsDiscoveryConfirmOpen] = useState(false);
+  const [discoveryToDelete, setDiscoveryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -55,14 +58,21 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
     fetchDiscoveries();
   }, [user, navigate, getDiscoveryList, cacheDiscoveryList]);
 
-  const handleDeleteDiscovery = (discoveryId: string) => {
-    if (!user) return;
+  const openDiscoveryDeleteDialog = (discoveryId: string) => {
+    setDiscoveryToDelete(discoveryId);
+    setIsDiscoveryConfirmOpen(true);
+  };
+
+  const confirmDeleteDiscovery = () => {
+    if (!user || !discoveryToDelete) return;
     const onSuccess = () => {
-      const updatedDiscoveries = discoveries.filter(d => d.id !== discoveryId);
+      const updatedDiscoveries = discoveries.filter(d => d.id !== discoveryToDelete);
       setDiscoveries(updatedDiscoveries);
       cacheDiscoveryList(updatedDiscoveries.map(d => ({ ...d, createdAt: d.createdAt.toString() })));
+      setIsDiscoveryConfirmOpen(false);
+      setDiscoveryToDelete(null);
     };
-    deleteDiscoveryHandler(user.uid, discoveryId, onSuccess, setError);
+    deleteDiscoveryHandler(user.uid, discoveryToDelete, onSuccess, setError);
   };
 
   if (isLoading) {
@@ -83,12 +93,19 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
               ...discovery,
               createdAt: typeof discovery.createdAt === 'string' ? new Date(discovery.createdAt) : discovery.createdAt
             };
-            return <DiscoveryCard key={discovery.id} discovery={discoveryWithDate} onDelete={() => handleDeleteDiscovery(discovery.id)} />
+            return <DiscoveryCard key={discovery.id} discovery={discoveryWithDate} onDelete={(e) => { e.stopPropagation(); openDiscoveryDeleteDialog(discovery.id); }} />
           })}
         </div>
       ) : (
         <p className="text-slate-400">You haven't made any discoveries yet.</p>
       )}
+      <ConfirmationDialog
+        isOpen={isDiscoveryConfirmOpen}
+        onClose={() => setIsDiscoveryConfirmOpen(false)}
+        onConfirm={confirmDeleteDiscovery}
+        title="Delete Discovery"
+        message="Are you sure you want to delete this discovery? This action cannot be undone."
+      />
     </div>
   );
 };
