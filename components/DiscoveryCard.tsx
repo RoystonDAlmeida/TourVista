@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import type { SavedDiscovery } from '../types';
 import { TrashIcon } from './icons';
 
-const DiscoveryCard: React.FC<{ discovery: SavedDiscovery, onDelete: () => void }> = ({ discovery, onDelete }) => (
+const DiscoveryCard: React.FC<{ discovery: SavedDiscovery, onDelete: (e: React.MouseEvent) => void }> = ({ discovery, onDelete }) => (
   <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-cyan-500/50 transition-colors duration-300 shadow-lg flex flex-col justify-between h-full">
     <Link to={`/discoveries/${discovery.id}`} className="block w-full">
       <div>
@@ -18,7 +18,7 @@ const DiscoveryCard: React.FC<{ discovery: SavedDiscovery, onDelete: () => void 
         </p>
       </div>
     </Link>
-    <button onClick={onDelete} className="text-red-400 hover:text-red-300 transition-colors self-end mt-4">
+    <button onClick={(e) => onDelete(e)} className="text-red-400 hover:text-red-300 transition-colors self-end mt-4">
       <TrashIcon className="w-5 h-5" />
     </button>
   </div>
