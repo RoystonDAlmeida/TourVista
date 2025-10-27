@@ -5,6 +5,7 @@ import Loader from './Loader';
 import { DownloadIcon, ShareIcon, TrashIcon } from './icons';
 import ConfirmationDialog from './ConfirmationDialog';
 import { handleDeletePostcard } from '../utils/deleteUtils';
+import { useCache } from '../contexts/CacheContext';
 
 interface GeneratedPostcardsDisplayProps {
   discoveryId?: string;
@@ -18,24 +19,33 @@ const GeneratedPostcardsDisplay: React.FC<GeneratedPostcardsDisplayProps> = ({ d
   const [postcardToDelete, setPostcardToDelete] = useState<string | null>(null);
   const [notification, setNotification] = useState<string>("");
 
+  const { cachePostcards, getCachedPostcards, clearPostcardCache } = useCache();
+
   const fetchPostcards = useCallback(async () => {
     if (auth.currentUser) {
       setIsLoading(true);
       setError(null);
       try {
+        //1. First fetch from cache
+        const cached = getCachedPostcards();
+        if (cached) {
+          setPostcards(cached);
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. If not there in cache, fetch from DB
         const fetchedPostcards = await getPostcardsForUser(auth.currentUser.uid, discoveryId);
         setPostcards(fetchedPostcards);
+        cachePostcards(fetchedPostcards);
       } catch (err: any) {
         console.error("Error fetching postcards:", err);
         setError(err.message || "Failed to load your postcards.");
       } finally {
         setIsLoading(false);
       }
-    } else {
-      setPostcards([]);
-      setIsLoading(false);
     }
-  }, [discoveryId]);
+  }, [discoveryId, cachePostcards, getCachedPostcards]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -63,6 +73,7 @@ const GeneratedPostcardsDisplay: React.FC<GeneratedPostcardsDisplayProps> = ({ d
         () => {
           setPostcards(postcards.filter(p => p.id !== postcardToDelete));
           setNotification('Postcard deleted successfully.');
+          clearPostcardCache(); // Clear cache after deletion
           setShowDeleteConfirm(false);
           setPostcardToDelete(null);
         },
@@ -130,6 +141,7 @@ const GeneratedPostcardsDisplay: React.FC<GeneratedPostcardsDisplayProps> = ({ d
   return (
     <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-700">
       <h3 className="text-xl font-bold text-cyan-300 mb-4">Your Generated Postcards</h3>
+      {notification && <p className="text-green-400">{notification}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {postcards.map((postcard) => (
           <div key={postcard.id} className="bg-slate-800 rounded-lg overflow-hidden shadow-lg relative group">
