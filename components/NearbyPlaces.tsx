@@ -9,6 +9,10 @@ const NearbyPlaces: React.FC<{ landmarkInfo: LandmarkInfo }> = ({ landmarkInfo }
   const { places, isLoading, error } = useNearbyPlaces(landmarkInfo);
   const [mapQuery, setMapQuery] = useState(landmarkInfo.name);
 
+  const handleShowOnMap = (name: string, latitude: number, longitude: number) => {
+    setMapQuery(`${name} @ ${latitude},${longitude}`);
+  };
+
   if (isLoading) {
     return <div className="p-6 flex justify-center items-center h-full min-h-[30rem]"><Loader message={`Finding places near ${landmarkInfo.name}...`}/></div>;
   }
@@ -24,9 +28,12 @@ const NearbyPlaces: React.FC<{ landmarkInfo: LandmarkInfo }> = ({ landmarkInfo }
       <MapView mapQuery={mapQuery} />
 
       {Array.isArray(places) && places.length > 0 ? (
-        <PlacesCarousel places={places} onShowOnMap={setMapQuery} />
+        <PlacesCarousel 
+          places={places} 
+          onShowOnMap={handleShowOnMap} 
+        />
       ) : (
-        <p className="text-center text-slate-400 py-8">Could not find specific nearby places to recommend at this time.</p>
+        <p className="text-center text-slate-400 py-8">No saved nearby places found. Explore to save some!</p>
       )}
     </div>
   );
