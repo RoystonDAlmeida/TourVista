@@ -339,30 +339,41 @@ export const getOrCreateConversation = async (userId: string, discoveryId: strin
  * @returns An unsubscribe function for the listener.
  */
 export const listenToConversationMessages = (
-    userId: string,
+    userId: string | null | undefined,
     conversationId: string,
     callback: (messages: ChatMessage[]) => void
 ): (() => void) => {
+    if (!userId) {
+        // If no userId, immediately return a no-op unsubscribe function
+        callback([]); // Clear messages if no user
+        return () => {};
+    }
+
     // Listen to the single conversation document, not the sub-collection
     const conversationDocRef = doc(db, 'users', userId, 'conversations', conversationId);
 
     return onSnapshot(conversationDocRef, (docSnapshot) => {
         if (docSnapshot.exists()) {
             const conversationData = docSnapshot.data();
-            // The messages are now in the 'history' array field
             const history = conversationData.history || [];
 
             const messages: ChatMessage[] = history.map((msg: any, index: number) => ({
                 role: msg.role,
                 text: msg.text,
                 timestamp: msg.timestamp?.toDate(),
-                // Create a stable key using the index, as array items don't have unique IDs
                 key: `${docSnapshot.id}-${index}`,
             }));
             callback(messages);
         } else {
-            // If the document doesn't exist, return an empty array
+            // If the document doesn't exist or access is denied, clear messages
             callback([]);
+        }
+    }, (error) => { // Add error handler to onSnapshot
+        console.error("Firestore snapshot listener error:", error);
+        // If permission denied, clear messages and potentially unsubscribe
+        if (error.code === 'permission-denied') {
+            callback([]); // Clear messages
+            // The listener will automatically be unsubscribed by Firestore on permission errors
         }
     });
 };
