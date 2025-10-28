@@ -11,7 +11,7 @@ export const PlaceCard: React.FC<{ place: NearbyPlace; onShowOnMap: (name: strin
         </div>
         <div className="relative z-10 mt-auto flex flex-col sm:flex-row gap-2">
             <button 
-                onClick={() => onShowOnMap(place.name, place.latitude, place.longitude)}
+                onClick={() => onShowOnMap(place.name, place.latitude!, place.longitude!)}
                 className="flex-1 text-sm font-semibold bg-slate-600 hover:bg-slate-500 transition-colors text-white py-2 px-3 rounded-md flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-700"
             >
                 <MapPinIcon className="w-4 h-4 flex-shrink-0" />
