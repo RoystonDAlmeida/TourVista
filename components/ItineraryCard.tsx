@@ -11,7 +11,7 @@ const ItineraryCard: React.FC<{ itinerary: SavedItinerary, landmarkName: string,
           {itinerary.duration} - <span className="italic">{itinerary.interests}</span>
         </p>
         <p className="text-xs text-slate-500">
-          Created on: {itinerary.createdAt.toLocaleDateString()}
+          Created on: {new Date(itinerary.createdAt).toLocaleDateString()}
         </p>
       </div>
       <button onClick={(e) => onDelete(e)} className="text-red-400 hover:text-red-300 transition-colors self-end mt-4">
