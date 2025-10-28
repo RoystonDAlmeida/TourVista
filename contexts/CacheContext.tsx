@@ -11,6 +11,7 @@ interface CacheContextType {
   getDiscovery: (id: string) => CachedDiscovery | undefined;
   cacheDiscoveryList: (discoveries: SavedDiscovery[]) => void;
   getDiscoveryList: () => SavedDiscovery[] | undefined;
+  clearDiscoveryListCache: () => void;
   cacheItineraries: (itineraries: SavedItinerary[]) => void;
   getCachedItineraries: () => SavedItinerary[] | undefined;
   clearItineraryCache: () => void;
@@ -224,6 +225,10 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, []);
 
+  const clearDiscoveryListCache = useCallback(() => {
+    setCachedDiscoveryList(undefined);
+  }, []);
+
   const cacheItineraries = useCallback((itineraries: SavedItinerary[]) => {
     setCachedItineraries(itineraries);
   }, []);
@@ -312,6 +317,7 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       getDiscovery,
       cacheDiscoveryList,
       getDiscoveryList,
+      clearDiscoveryListCache,
       cacheItineraries,
       getCachedItineraries,
       clearItineraryCache,
