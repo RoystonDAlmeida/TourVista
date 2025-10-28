@@ -23,8 +23,11 @@ const MyItineraries = ({ user }: MyItinerariesProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItineraryId, setSelectedItineraryId] = useState<string | null>(null);
   const [selectedItinerary, setSelectedItinerary] = useState<SavedItinerary | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   useEffect(() => {
+    document.title = 'My Itineraries - TourVista';
+
     if (!user) {
       navigate('/signin');
       return;
@@ -70,6 +73,8 @@ const MyItineraries = ({ user }: MyItinerariesProps) => {
       clearItineraryCache();
       setIsDeleteDialogOpen(false);
       setSelectedItineraryId(null);
+      setShowPreviewDialog(false); // Close preview if open
+      setSelectedItinerary(null); // Clear selected itinerary
     };
 
     deleteItineraryHandler(user.uid, selectedItineraryId, onSuccess, setError);
@@ -77,10 +82,18 @@ const MyItineraries = ({ user }: MyItinerariesProps) => {
 
   const handleCardClick = (itinerary: SavedItinerary) => {
     setSelectedItinerary(itinerary);
+    setShowPreviewDialog(true);
   };
 
   const handleCloseDialog = () => {
     setSelectedItinerary(null);
+    setShowPreviewDialog(false);
+  };
+
+  const handleDeleteRequest = () => {
+    if (selectedItinerary) {
+      openDeleteDialog(selectedItinerary.id);
+    }
   };
 
 
@@ -117,8 +130,10 @@ const MyItineraries = ({ user }: MyItinerariesProps) => {
       />
       {selectedItinerary && (
         <ItineraryPreviewDialog
+          isOpen={showPreviewDialog}
           itinerary={selectedItinerary}
           onClose={handleCloseDialog}
+          onDelete={handleDeleteRequest}
         />
       )}
     </div>
