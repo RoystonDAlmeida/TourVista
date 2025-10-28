@@ -4,11 +4,12 @@ import type { LandmarkInfo, SavedDiscovery, SavedItinerary, NearbyPlace, Postcar
 interface CachedDiscovery {
   landmarkInfo: LandmarkInfo;
   imageUrl: string;
+  language: string; // Add language to cached discovery
 }
 
 interface CacheContextType {
-  cacheDiscovery: (id: string, discovery: CachedDiscovery) => void;
-  getDiscovery: (id: string) => CachedDiscovery | undefined;
+  cacheDiscovery: (id: string, discovery: CachedDiscovery, language: string) => void;
+  getDiscovery: (id: string, language: string) => CachedDiscovery | undefined;
   cacheDiscoveryList: (discoveries: SavedDiscovery[]) => void;
   getDiscoveryList: () => SavedDiscovery[] | undefined;
   clearDiscoveryListCache: () => void;
@@ -192,16 +193,16 @@ export const CacheProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [nearbyPlacesCache]);
 
-  const cacheDiscovery = useCallback((id: string, discovery: CachedDiscovery) => {
+  const cacheDiscovery = useCallback((id: string, discovery: CachedDiscovery, language: string) => {
     setDiscoveryCache(prevCache => {
       const newCache = new Map(prevCache);
-      newCache.set(id, discovery);
+      newCache.set(`${id}-${language}`, discovery);
       return newCache;
     });
   }, []);
 
-  const getDiscovery = useCallback((id: string) => {
-    return discoveryCache.get(id);
+  const getDiscovery = useCallback((id: string, language: string) => {
+    return discoveryCache.get(`${id}-${language}`);
   }, [discoveryCache]);
 
   const cacheDiscoveryList = useCallback((discoveries: SavedDiscovery[]) => {
