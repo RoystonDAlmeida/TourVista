@@ -4,7 +4,7 @@ import PostcardCreator from './PostcardCreator';
 import GeneratedPostcardsDisplay from './GeneratedPostcardsDisplay';
 
 interface PostcardGeneratorProps {
-  imageUrl: string;
+  imageUrl?: string;
   discoveryId?: string; // Add discoveryId prop
 }
 
@@ -22,7 +22,14 @@ const PostcardGenerator: React.FC<PostcardGeneratorProps> = ({ imageUrl, discove
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Image Enhancer Section */}
-        <ImageEnhancer imageUrl={imageUrl} onImageEdited={handleImageEdited} />
+        {imageUrl ? (
+          <ImageEnhancer imageUrl={imageUrl} onImageEdited={handleImageEdited} />
+        ) : (
+          <div className="flex flex-col gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700 items-center justify-center text-slate-400 h-64">
+            <p>No image available for enhancement.</p>
+            <p>Please select a discovery with an image.</p>
+          </div>
+        )}
 
         {/* Postcard Creator Section */}
         <PostcardCreator editedImageDataUrl={editedImageDataUrl} discoveryId={discoveryId} />
