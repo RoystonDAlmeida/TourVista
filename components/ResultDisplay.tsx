@@ -35,7 +35,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ user, imageUrl, landmarkI
       case 'chat':
         return <ChatTab user={user} discoveryId={discoveryId} />;
       case 'nearby':
-        return <NearbyPlaces landmarkInfo={landmarkInfo} />;
+        return <NearbyPlaces landmarkInfo={landmarkInfo} discoveryId={discoveryId} />;
       case 'postcard':
         return <PostcardGenerator imageUrl={imageUrl} discoveryId={discoveryId} />;
       case 'itinerary':
