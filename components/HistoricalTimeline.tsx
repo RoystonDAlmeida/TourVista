@@ -51,7 +51,7 @@ const TimelineRenderer: React.FC<{ markdownText: string }> = ({ markdownText }) 
 interface HistoricalTimelineProps {
   landmarkInfo: LandmarkInfo;
   user: AppUser | null;
-  discoveryId: string;
+  discoveryId?: string;
 }
 
 const HistoricalTimeline: React.FC<HistoricalTimelineProps> = ({ landmarkInfo, user, discoveryId }) => {
