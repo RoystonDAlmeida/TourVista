@@ -11,6 +11,8 @@ import {
     sendEmailVerification,
     sendPasswordResetEmail as firebaseSendPasswordResetEmail,
     confirmPasswordReset,
+    setPersistence,
+    inMemoryPersistence,
     type User
 } from 'firebase/auth';
 import {
@@ -76,18 +78,21 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const signInWithGoogle = async () => {
+    await setPersistence(auth, inMemoryPersistence);
     const { user } = await signInWithPopup(auth, googleProvider);
     await createUserDocumentFromAuth(user);
 };
 
 export const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+    await setPersistence(auth, inMemoryPersistence);
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(user, { displayName });
     await createUserDocumentFromAuth(user, { displayName });
     await sendEmailVerification(user);
 };
 
-export const signInWithEmail = (email: string, password: string) => {
+export const signInWithEmail = async (email: string, password: string) => {
+    await setPersistence(auth, inMemoryPersistence);
     return signInWithEmailAndPassword(auth, email, password);
 };
 
