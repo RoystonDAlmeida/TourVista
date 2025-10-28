@@ -1,21 +1,24 @@
 import { Router } from 'express';
 import { Modality } from "@google/genai";
 import { getAiClient, base64ToGenerativePart } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 const router = Router();
 
+const postcardSchema = z.object({
+    body: z.object({
+        image: z.string().min(1, "image is required"),
+        mimeType: z.string().min(1, "mimeType is required"),
+        stylePrompt: z.string().min(1, "stylePrompt is required"),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-    
+router.post('/', validate(postcardSchema), async (req, res) => {
     try {
         const { image, mimeType, stylePrompt } = req.body;
-        if (!image || !mimeType || !stylePrompt) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
         
         if (aiError) {
             return res.status(500).json({ error: aiError });

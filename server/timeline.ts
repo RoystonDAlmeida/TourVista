@@ -1,20 +1,24 @@
 import { Router } from 'express';
 import { getAiClient } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 const router = Router();
 
+const timelineSchema = z.object({
+    body: z.object({
+        landmarkInfo: z.object({
+            name: z.string().min(1, "landmarkInfo.name is required"),
+            history: z.string().min(1, "landmarkInfo.history is required"),
+        }).passthrough(),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
+router.post('/', validate(timelineSchema), async (req, res) => {
     try {
         const { landmarkInfo } = req.body;
-        if (!landmarkInfo) {
-            return res.status(400).json({ error: 'Missing landmarkInfo' });
-        }
 
         const prompt = `Act as a historian and storyteller. Create a detailed historical timeline for ${landmarkInfo.name}.
                         Focus on key dates, significant events, and interesting, little-known facts.

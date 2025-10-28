@@ -1,18 +1,21 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fetch from 'node-fetch';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 const uploadRouter = Router();
 const upload = multer();
 
+const uploadSchema = z.object({
+    file: z.any().refine(file => !!file, { message: "No image file provided." }),
+});
+
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
 const IMGBB_API_URL = process.env.IMGBB_API_URL;
 
-uploadRouter.post('/image', upload.single('image'), async (req, res) => {
+uploadRouter.post('/image', upload.single('image'), validate(uploadSchema), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image file provided.' });
-    }
 
     if (!IMGBB_API_KEY) {
       console.error('IMGBB_API_KEY is not defined in environment variables.');

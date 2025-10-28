@@ -1,21 +1,24 @@
 import { Router } from 'express';
 import { Modality } from "@google/genai";
 import { getAiClient, base64ToGenerativePart } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 const router = Router();
 
+const narrateSchema = z.object({
+    body: z.object({
+        text: z.string().min(1, "text is required"),
+        voice: z.string().min(1, "voice is required"),
+        language: z.string().min(1, "language is required"),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) =>  {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-    
+router.post('/', validate(narrateSchema), async (req, res) =>  {
     try {
         const { text, voice, language } = req.body;
-        if (!text || !voice || !language) {
-            return res.status(400).json({ error: 'Missing required fields: text, voice, language' });
-        }
         
         const prompt = `Narrate the following text clearly and enthusiastically: ${text}`;
         

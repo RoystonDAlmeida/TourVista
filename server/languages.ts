@@ -2,25 +2,25 @@ import { Router } from 'express';
 import dotenv from 'dotenv';
 import { Type } from "@google/genai";
 import { getAiClient } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 // Load environment variables
 dotenv.config();
 
 const router = Router();
 
+const languagesSchema = z.object({
+    body: z.object({
+        countryCode: z.string().min(1, "countryCode is required"),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) =>{
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
+router.post('/', validate(languagesSchema), async (req, res) =>{
     try {
         const { countryCode } = req.body;
-        if (!countryCode) {
-            return res.status(400).json({ error: 'Missing country code' });
-        }
 
         const COUNTRY_LANGUAGES_API_KEY = process.env.COUNTRY_LANGUAGES_API_KEY;
 

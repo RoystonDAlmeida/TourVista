@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { GenerateContentResponse } from "@google/genai";
 import { getAiClient } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 interface GroundingChunk {
   web?: {
@@ -22,19 +24,22 @@ interface GroundingChunk {
 
 const router = Router();
 
+const nearbyPlacesSchema = z.object({
+    body: z.object({
+        landmarkName: z.string().min(1, "landmarkName is required"),
+        coords: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
+router.post('/', validate(nearbyPlacesSchema), async (req, res) => {
     let geminiResponse: GenerateContentResponse;
     try {
         const { landmarkName, coords } = req.body;
-        if (!landmarkName || !coords) {
-            return res.status(400).json({ error: 'Missing landmarkName or coords' });
-        }
 
         if (aiError) {
           return res.status(500).json({ error: aiError });

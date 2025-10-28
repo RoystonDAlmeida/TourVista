@@ -1,18 +1,25 @@
 import { Router } from 'express';
 import { GenerateContentResponse } from "@google/genai";
 import { getAiClient, base64ToGenerativePart } from './utils/gemini';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 const router = Router();
 
+const landmarkInfoSchema = z.object({
+    body: z.object({
+        image: z.string().min(1, "image is required"),
+        mimeType: z.string().min(1, "mimeType is required"),
+        language: z.string().min(1, "language is required"),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
-router.post('/', async (req, res) => {
+router.post('/', validate(landmarkInfoSchema), async (req, res) => {
     let geminiResponse: GenerateContentResponse | undefined;
     try {
         const { image, mimeType, language } = req.body;
-        if (!image || !mimeType || !language) {
-            return res.status(400).json({ error: 'Missing required fields: image, mimeType, language' });
-        }
 
         if (aiError) {
             return res.status(500).json({ error: aiError });
