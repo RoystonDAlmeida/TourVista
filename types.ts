@@ -48,6 +48,7 @@ export interface NearbyPlace {
   title: string; // The official title from Google Maps source
   latitude?: number;
   longitude?: number;
+  discoveryId: string;
 }
 
 export interface Language {
