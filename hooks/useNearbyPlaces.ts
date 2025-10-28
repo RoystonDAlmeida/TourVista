@@ -4,7 +4,7 @@ import { auth, saveNearbyPlaceForUser, getNearbyPlacesForUser } from '../service
 import { useCache } from '../contexts/CacheContext';
 import type { LandmarkInfo, NearbyPlace } from '../types';
 
-export const useNearbyPlaces = (landmarkInfo: LandmarkInfo) => {
+export const useNearbyPlaces = (landmarkInfo: LandmarkInfo, discoveryId: string) => {
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export const useNearbyPlaces = (landmarkInfo: LandmarkInfo) => {
         }
 
         // 2. Try to get saved places from Firebase
-        const saved = await getNearbyPlacesForUser(userId);
+        const saved = await getNearbyPlacesForUser(userId, discoveryId);
         if (saved.length > 0) {
           setPlaces(saved);
           cacheNearbyPlaces(cacheKey, saved); // Cache places from Firebase
@@ -53,7 +53,7 @@ export const useNearbyPlaces = (landmarkInfo: LandmarkInfo) => {
 
         // 4. Save newly fetched places to Firebase
         for (const place of fetchedPlaces) {
-          await saveNearbyPlaceForUser(userId, place);
+          await saveNearbyPlaceForUser(userId, { ...place, discoveryId });
         }
 
       } catch (err: any) {
