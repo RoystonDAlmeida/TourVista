@@ -10,14 +10,14 @@ interface DiscoveryNavigatorProps {
 const DiscoveryNavigator: React.FC<DiscoveryNavigatorProps> = ({ children }) => {
   const navigate = useNavigate();
   const { cacheDiscovery } = useCache();
-  const { landmarkInfo, imageUrl, discoveryId } = useLandmarkProcessing();
+  const { landmarkInfo, imageUrl, discoveryId, selectedLanguage } = useLandmarkProcessing(navigate);
 
   useEffect(() => {
     if (landmarkInfo && imageUrl && discoveryId) {
-      cacheDiscovery(discoveryId, { landmarkInfo, imageUrl });
+      cacheDiscovery(discoveryId, { landmarkInfo, imageUrl, language: selectedLanguage }, selectedLanguage);
       navigate(`/discoveries/${discoveryId}`);
     }
-  }, [landmarkInfo, imageUrl, discoveryId, cacheDiscovery, navigate]);
+  }, [landmarkInfo, imageUrl, discoveryId, cacheDiscovery, navigate, selectedLanguage]);
 
   return <>{children}</>;
 };
