@@ -48,8 +48,8 @@ export const PlacesCarousel: React.FC<PlacesCarouselProps> = ({ places, onShowOn
   return (
     <div className="relative">
       <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style={{scrollSnapType: 'x mandatory'}}>
-        {places.map(place => (
-          <div key={place.title} className="snap-start">
+        {places.map((place, index) => (
+          <div key={`${place.uri}-${index}`} className="snap-start">
             <PlaceCard 
               place={place} 
               onShowOnMap={onShowOnMap} 
