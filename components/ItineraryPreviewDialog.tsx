@@ -3,14 +3,20 @@ import { InteractiveItinerary } from './InteractiveItinerary';
 import { SavedItinerary } from '../types';
 
 interface ItineraryPreviewDialogProps {
+  isOpen: boolean;
   itinerary: SavedItinerary;
   onClose: () => void;
+  onDelete: () => void;
 }
 
 const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
   itinerary,
   onClose,
+  isOpen,
+  onDelete
 }) => {
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -24,6 +30,12 @@ const ItineraryPreviewDialog: React.FC<ItineraryPreviewDialogProps> = ({
           <InteractiveItinerary markdownText={itinerary.itineraryContent} />
         </div>
         <div className="p-4 border-t border-slate-700 flex justify-end gap-2">
+          <button
+            onClick={onDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Delete
+          </button>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
