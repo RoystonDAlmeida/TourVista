@@ -11,9 +11,11 @@ import { useCache } from '../contexts/CacheContext';
 interface DiscoveryDetailProps {
   user: AppUser | null;
   onStartNewTour: () => void;
+  audioData: string | null;
+  selectedLanguage: string; // Add selectedLanguage prop
 }
 
-const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
+const DiscoveryDetail = ({ user, onStartNewTour, audioData, selectedLanguage }: DiscoveryDetailProps) => {
   const { discoveryId } = useParams<{ discoveryId: string }>();
   const navigate = useNavigate();
   const [discovery, setDiscovery] = useState<{ landmarkInfo: LandmarkInfo; imageUrl: string; } | null>(null);
@@ -22,6 +24,12 @@ const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
   const { getDiscovery, cacheDiscovery } = useCache();
 
   useEffect(() => {
+    if (discovery?.landmarkInfo?.name) {
+      document.title = `${discovery.landmarkInfo.name} - TourVista`;
+    } else {
+      document.title = 'Discovery Detail - TourVista';
+    }
+
     if (!user) {
       navigate('/signin');
       return;
@@ -35,7 +43,7 @@ const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
       }
 
       // Try to get from cache first
-      const cached = getDiscovery(discoveryId);
+      const cached = getDiscovery(discoveryId, selectedLanguage);
       if (cached) {
         setDiscovery(cached);
         setIsLoading(false);
@@ -51,7 +59,10 @@ const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
           const discoveryData = docSnap.data();
           const fullDiscovery = discoveryData as { landmarkInfo: LandmarkInfo; imageUrl: string; };
           setDiscovery(fullDiscovery);
-          cacheDiscovery(discoveryId, fullDiscovery); // Cache after fetching
+          
+          // Construct the CachedDiscovery object with the language
+          const cachedDiscoveryWithLanguage = { ...fullDiscovery, language: selectedLanguage };
+          cacheDiscovery(discoveryId, cachedDiscoveryWithLanguage, selectedLanguage); // Cache after fetching
         } else {
           setError('Discovery not found.');
         }
@@ -63,7 +74,7 @@ const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
     };
 
     fetchDiscovery();
-  }, [discoveryId, user, navigate, getDiscovery, cacheDiscovery]);
+  }, [discoveryId, user, navigate, getDiscovery, cacheDiscovery, discovery, selectedLanguage]);
 
   if (isLoading) {
     return <Loader message="Loading discovery..." />;
@@ -85,6 +96,7 @@ const DiscoveryDetail = ({ user, onStartNewTour }: DiscoveryDetailProps) => {
         landmarkInfo={discovery.landmarkInfo}
         imageUrl={discovery.imageUrl}
         discoveryId={discoveryId!}
+        audioData={discoveryId ? (audioData ?? undefined) : undefined}
       />
       <button
         onClick={onStartNewTour}
