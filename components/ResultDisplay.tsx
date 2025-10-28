@@ -50,7 +50,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ user, imageUrl, landmarkI
   return (
     <div className="w-full max-w-5xl mx-auto bg-slate-800 rounded-xl shadow-2xl overflow-hidden animate-fade-in flex flex-col">
       <ResultHeader imageUrl={imageUrl} landmarkInfo={landmarkInfo} />
-      <ResultTabs user={user} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ResultTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-grow bg-slate-800">
         {renderTabContent()}
       </div>
