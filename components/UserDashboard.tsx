@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ImageUploader from './ImageUploader';
 import SavedItinerariesAndDiscoveries from './SavedItinerariesAndDiscoveries';
 import type { AppUser } from '../types';
@@ -10,6 +10,9 @@ interface UserDashboardProps {
 }
 
 const UserDashboard: React.FC<UserDashboardProps> = ({ user, onImageUpload, isLoading }) => {
+  useEffect(() => {
+    document.title = 'Dashboard - TourVista';
+  }, []);
   return (
     <div className="w-full max-w-5xl">
       <div className="text-center mb-8">
