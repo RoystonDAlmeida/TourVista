@@ -1,17 +1,15 @@
 import React from 'react';
-import type { AppUser } from '../../types';
 import { TabButton } from './TabButton';
 import { BookOpenIcon, ChatBubbleLeftRightIcon, MapPinIcon, SparklesIcon, CalendarDaysIcon, HourglassIcon } from '../icons';
 
 export type Tab = 'tour' | 'timeline' | 'chat' | 'nearby' | 'postcard' | 'itinerary' | 'trips';
 
 interface ResultTabsProps {
-    user: AppUser | null;
     activeTab: Tab;
     setActiveTab: (tab: Tab) => void;
 }
 
-export const ResultTabs: React.FC<ResultTabsProps> = ({ user, activeTab, setActiveTab }) => (
+export const ResultTabs: React.FC<ResultTabsProps> = ({ activeTab, setActiveTab }) => (
     <div className="flex flex-row bg-slate-800/60 border-b border-slate-700 overflow-x-auto px-2 sm:px-4">
         <TabButton label="Tour Guide" icon={<BookOpenIcon className="w-5 h-5"/>} isActive={activeTab === 'tour'} onClick={() => setActiveTab('tour')} />
         <TabButton label="Timeline" icon={<HourglassIcon className="w-5 h-5"/>} isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
