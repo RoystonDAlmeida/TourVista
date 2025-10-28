@@ -23,6 +23,8 @@ const MyDiscoveries = ({ user }: MyDiscoveriesProps) => {
   const [discoveryToDelete, setDiscoveryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = 'My Discoveries - TourVista';
+
     if (!user) {
       navigate('/signin');
       return;
