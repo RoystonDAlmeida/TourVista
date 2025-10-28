@@ -22,6 +22,7 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
   const [isConversationLoading, setIsConversationLoading] = useState(true);
   const [streamNextMessage, setStreamNextMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const unsubscribeRef = useRef<(() => void) | undefined>(undefined); // Ref to store unsubscribe function
   const { getConversationId, cacheConversationId } = useCache();
 
   const isAiTyping = messages.length > 0 && messages[messages.length - 1].role === 'model' && messages[messages.length - 1].text === '...';
@@ -35,51 +36,57 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
 
   // Effect to get or create conversation and set up listener
   useEffect(() => {
+    // If user logs out or discoveryId is missing, immediately unsubscribe and clear state
     if (!user?.uid || !discoveryId) {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = undefined;
+      }
       setIsConversationLoading(false);
+      setMessages([]); // Clear messages on logout/discoveryId change
+      setConversationId(null); // Clear conversation ID on logout/discoveryId change
       return;
     }
 
-    let unsubscribe: (() => void) | undefined;
-
     const setupConversation = async () => {
       const cachedConversationId = getConversationId(discoveryId);
+      let currentConversationId = cachedConversationId;
 
-      if (cachedConversationId) {
-        // If we have a cached ID, assume messages will load quickly from Firebase cache.
-        // Don't show the main "Loading chat..." overlay.
-        setIsConversationLoading(false);
-        setConversationId(cachedConversationId);
-        unsubscribe = listenToConversationMessages(user.uid, cachedConversationId, (fetchedMessages) => {
-          setMessages(fetchedMessages);
-        });
-      } else {
-        // If no cached ID, we must fetch it and show the loader.
-        setIsConversationLoading(true);
+      if (!currentConversationId) {
+        setIsConversationLoading(true); // Show loader if fetching conversation ID
         try {
           const conversation = await getOrCreateConversation(user.uid, discoveryId);
-          if (conversation.id) {
-            cacheConversationId(discoveryId, conversation.id);
-            setConversationId(conversation.id);
-            unsubscribe = listenToConversationMessages(user.uid, conversation.id, (fetchedMessages) => {
-              setMessages(fetchedMessages);
-              setIsConversationLoading(false); // Hide loader once messages arrive
-            });
-          } else {
-            setIsConversationLoading(false);
+          currentConversationId = conversation.id || null;
+          if (currentConversationId) {
+            cacheConversationId(discoveryId, currentConversationId);
           }
         } catch (error) {
           console.error("Error setting up conversation:", error);
           setIsConversationLoading(false);
+          return;
         }
+      }
+      
+      if (currentConversationId) {
+        setConversationId(currentConversationId);
+        // Store the unsubscribe function in the ref
+        unsubscribeRef.current = listenToConversationMessages(user.uid, currentConversationId, (fetchedMessages) => {
+          setMessages(fetchedMessages);
+          setIsConversationLoading(false); // Hide loader once messages arrive
+        });
+      } else {
+        setIsConversationLoading(false);
       }
     };
 
+    setIsConversationLoading(true); // Start loading state when user/discoveryId are valid
     setupConversation();
 
+    // Cleanup function for the effect
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = undefined;
       }
     };
   }, [user?.uid, discoveryId, getConversationId, cacheConversationId]);
