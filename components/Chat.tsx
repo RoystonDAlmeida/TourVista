@@ -56,7 +56,7 @@ const ChatComponent: React.FC<ChatProps> = ({ user, discoveryId }) => {
         setIsConversationLoading(true); // Show loader if fetching conversation ID
         try {
           const conversation = await getOrCreateConversation(user.uid, discoveryId);
-          currentConversationId = conversation.id || null;
+          currentConversationId = conversation.id || undefined;
           if (currentConversationId) {
             cacheConversationId(discoveryId, currentConversationId);
           }
