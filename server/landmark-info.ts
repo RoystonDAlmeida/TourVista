@@ -49,12 +49,15 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ error: "The AI returned an empty response. This could be due to content filtering or a temporary issue. Please try a different image." });
         }
 
-        let jsonText = responseText.trim();
-        if (jsonText.startsWith('```json')) {
-            jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-        } else if (jsonText.startsWith('```')) {
-            jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+        const jsonStartIndex = responseText.indexOf('{');
+        const jsonEndIndex = responseText.lastIndexOf('}');
+
+        if (jsonStartIndex === -1 || jsonEndIndex === -1 || jsonEndIndex < jsonStartIndex) {
+             console.error("Failed to find JSON object in AI response:", responseText);
+             return res.status(500).json({ error: "The AI returned an invalid response format. Could not find a JSON object." });
         }
+        
+        const jsonText = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
 
         const info = JSON.parse(jsonText);
         const sources = geminiResponse.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
