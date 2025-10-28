@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ResultDisplay from './ResultDisplay';
 import type { LandmarkInfo, AppUser } from '../types';
 
@@ -21,6 +21,13 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
   discoveryId,
   onStartNewTour
 }) => {
+  useEffect(() => {
+    if (landmarkInfo?.name) {
+      document.title = `${landmarkInfo.name} - TourVista`;
+    } else {
+      document.title = 'Discovery Result - TourVista';
+    }
+  }, [landmarkInfo]);
   return (
     <>
       <ResultDisplay 
