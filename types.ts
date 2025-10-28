@@ -13,6 +13,7 @@ export interface GroundingChunk {
         text: string;
       }[];
     }[];
+    placeId?: string;
   };
 }
 
