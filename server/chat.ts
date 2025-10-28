@@ -3,6 +3,8 @@ import { getAiClient } from './utils/gemini';
 import * as admin from 'firebase-admin'; // Import firebase-admin
 import { FieldValue } from 'firebase-admin/firestore'; // Import FieldValue for serverTimestamp
 import dotenv from 'dotenv';
+import { z } from 'zod';
+import { validate } from './utils/validation';
 
 // Load env variables
 dotenv.config();
@@ -32,6 +34,14 @@ const db = admin.firestore(); // Get Firestore instance from admin SDK
 
 const router = Router();
 
+const chatSchema = z.object({
+    body: z.object({
+        userId: z.string().min(1, "userId is required"),
+        discoveryId: z.string().min(1, "discoveryId is required"),
+        message: z.string().min(1, "message is required"),
+    }),
+});
+
 const { client: ai, error: aiError } = getAiClient();
 
 // Helper function to get landmarkInfo from discoveryId
@@ -48,11 +58,7 @@ async function getLandmarkInfoFromDiscoveryId(userId: string, discoveryId: strin
     }
 }
 
-router.post('/', async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
+router.post('/', validate(chatSchema), async (req, res) => {
     if (aiError) {
         console.error("AI Client Initialization Error:", aiError);
         return res.status(500).json({ error: aiError });
@@ -60,9 +66,6 @@ router.post('/', async (req, res) => {
 
     try {
         const { userId, discoveryId, message } = req.body;
-        if (!userId || !discoveryId || !message) {
-            return res.status(400).json({ error: 'Missing required fields: userId, discoveryId, or message' });
-        }
 
         // 1. Get or Create Conversation reference
         const conversationsRef = db.collection('users').doc(userId).collection('conversations');
