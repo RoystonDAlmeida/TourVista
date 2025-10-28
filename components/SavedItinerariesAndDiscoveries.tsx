@@ -24,7 +24,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
   const [isLoadingItineraries, setIsLoadingItineraries] = useState(true);
   const [isLoadingDiscoveries, setIsLoadingDiscoveries] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { cacheDiscovery, getDiscovery, cacheDiscoveryList, getDiscoveryList, getCachedItineraries, cacheItineraries, clearItineraryCache } = useCache();
+  const { cacheDiscovery, cacheDiscoveryList, getDiscoveryList, getCachedItineraries, cacheItineraries, clearItineraryCache } = useCache();
 
   // State for delete confirmations
   const [isItineraryConfirmOpen, setIsItineraryConfirmOpen] = useState(false);
@@ -32,6 +32,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
   const [isDiscoveryConfirmOpen, setIsDiscoveryConfirmOpen] = useState(false);
   const [discoveryToDelete, setDiscoveryToDelete] = useState<string | null>(null);
   const [selectedItinerary, setSelectedItinerary] = useState<SavedItinerary | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
 
   useEffect(() => {
@@ -77,12 +78,7 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
         }));
         setDiscoveries(userDiscoveries);
         cacheDiscoveryList(serializableDiscoveries);
-        userDiscoveries.forEach(discovery => {
-          cacheDiscovery(discovery.id, {
-            landmarkInfo: discovery.landmarkInfo,
-            imageUrl: discovery.imageUrl,
-          });
-        });
+        
       } catch (err) {
         console.error("Error fetching discoveries:", err);
         setError("Could not load your saved discoveries. Please try again later.");
@@ -108,6 +104,8 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
         clearItineraryCache();
         setIsItineraryConfirmOpen(false);
         setItineraryToDelete(null);
+        setShowPreviewDialog(false); // Close preview if open
+        setSelectedItinerary(null); // Clear selected itinerary
       };
       deleteItineraryHandler(user.uid, itineraryToDelete, onSuccess, (message) => setError(message));
     }
@@ -134,10 +132,18 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
 
   const handleCardClick = (itinerary: SavedItinerary) => {
     setSelectedItinerary(itinerary);
+    setShowPreviewDialog(true);
   };
 
   const handleCloseDialog = () => {
     setSelectedItinerary(null);
+    setShowPreviewDialog(false);
+  };
+
+  const handleDeleteRequest = () => {
+    if (selectedItinerary) {
+      openItineraryDeleteDialog(selectedItinerary.id);
+    }
   };
 
 
@@ -218,8 +224,10 @@ const SavedItinerariesAndDiscoveries: React.FC<{ user: AppUser }> = ({ user }) =
       />
       {selectedItinerary && (
         <ItineraryPreviewDialog
+          isOpen={showPreviewDialog}
           itinerary={selectedItinerary}
           onClose={handleCloseDialog}
+          onDelete={handleDeleteRequest}
         />
       )}
     </div>
