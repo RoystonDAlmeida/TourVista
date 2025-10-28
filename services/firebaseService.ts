@@ -196,9 +196,9 @@ export const saveNearbyPlaceForUser = async (userId: string, nearbyPlaceData: Om
     return docRef.id;
 };
 
-export const getNearbyPlacesForUser = async (userId: string): Promise<NearbyPlace[]> => {
+export const getNearbyPlacesForUser = async (userId: string, discoveryId: string): Promise<NearbyPlace[]> => {
     const nearbyPlacesCollectionRef = collection(db, 'users', userId, 'nearbyPlaces');
-    const q = query(nearbyPlacesCollectionRef, orderBy('createdAt', 'desc'));
+    const q = query(nearbyPlacesCollectionRef, where('discoveryId', '==', discoveryId), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map(docSnapshot => {
@@ -210,6 +210,7 @@ export const getNearbyPlacesForUser = async (userId: string): Promise<NearbyPlac
             name: data.name,
             title: data.title,
             uri: data.uri,
+            discoveryId: data.discoveryId,
         } as NearbyPlace;
     });
 };
