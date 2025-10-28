@@ -4,7 +4,7 @@ import ChatComponent from '../Chat';
 
 interface ChatTabProps {
     user: AppUser | null;
-    discoveryId: string;
+    discoveryId?: string;
 }
 
 export const ChatTab: React.FC<ChatTabProps> = ({ user, discoveryId }) => {
