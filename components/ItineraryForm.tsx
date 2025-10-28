@@ -9,7 +9,6 @@ interface ItineraryFormProps {
   setInterests: (interests: string) => void;
   isLoading: boolean;
   onSubmit: (e: React.FormEvent) => void;
-  landmarkName: string;
 }
 
 const ItineraryForm: React.FC<ItineraryFormProps> = ({
@@ -19,7 +18,6 @@ const ItineraryForm: React.FC<ItineraryFormProps> = ({
   setInterests,
   isLoading,
   onSubmit,
-  landmarkName,
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4 mb-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
