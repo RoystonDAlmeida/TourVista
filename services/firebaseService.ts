@@ -12,7 +12,7 @@ import {
     sendPasswordResetEmail as firebaseSendPasswordResetEmail,
     confirmPasswordReset,
     setPersistence,
-    inMemoryPersistence,
+    browserSessionPersistence,
     type User
 } from 'firebase/auth';
 import {
@@ -78,13 +78,13 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const signInWithGoogle = async () => {
-    await setPersistence(auth, inMemoryPersistence);
+    await setPersistence(auth, browserSessionPersistence);
     const { user } = await signInWithPopup(auth, googleProvider);
     await createUserDocumentFromAuth(user);
 };
 
 export const signUpWithEmail = async (email: string, password: string, displayName: string) => {
-    await setPersistence(auth, inMemoryPersistence);
+    await setPersistence(auth, browserSessionPersistence);
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(user, { displayName });
     await createUserDocumentFromAuth(user, { displayName });
@@ -92,7 +92,7 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
 };
 
 export const signInWithEmail = async (email: string, password: string) => {
-    await setPersistence(auth, inMemoryPersistence);
+    await setPersistence(auth, browserSessionPersistence);
     return signInWithEmailAndPassword(auth, email, password);
 };
 
