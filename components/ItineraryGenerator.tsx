@@ -38,7 +38,6 @@ const ItineraryGenerator: React.FC<{ user: AppUser; landmarkInfo: LandmarkInfo; 
         setInterests={setInterests}
         isLoading={isLoading}
         onSubmit={handleSubmit}
-        landmarkName={landmarkInfo.name}
       />
 
       <GeneratedItineraryDisplay
