@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGetStarted }) => {
+  useEffect(() => {
+    document.title = 'Welcome to TourVista';
+  }, []);
   return (
     <div className="text-center p-10 bg-slate-800/50 rounded-2xl max-w-2xl w-full shadow-lg border border-slate-700">
       <h2 className="text-2xl font-bold text-cyan-300">Your AI-Powered Travel Companion</h2>
