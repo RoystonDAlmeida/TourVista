@@ -5,8 +5,8 @@ import { MapView } from './nearby/MapView';
 import { PlacesCarousel } from './nearby/PlacesCarousel';
 import { useNearbyPlaces } from '../hooks/useNearbyPlaces';
 
-const NearbyPlaces: React.FC<{ landmarkInfo: LandmarkInfo }> = ({ landmarkInfo }) => {
-  const { places, isLoading, error } = useNearbyPlaces(landmarkInfo);
+const NearbyPlaces: React.FC<{ landmarkInfo: LandmarkInfo; discoveryId: string; }> = ({ landmarkInfo, discoveryId }) => {
+  const { places, isLoading, error } = useNearbyPlaces(landmarkInfo, discoveryId);
   const [mapQuery, setMapQuery] = useState(landmarkInfo.name);
 
   const handleShowOnMap = (name: string, latitude: number, longitude: number) => {
