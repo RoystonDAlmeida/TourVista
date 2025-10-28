@@ -1,13 +1,8 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { PauseIcon, PlayIcon, StopIcon } from './icons';
 import { decode, decodeAudioData } from '../utils/audioUtils';
-import { PlayIcon, PauseIcon, StopIcon } from './icons';
 
-interface AudioPlayerProps {
-  base64Audio: string;
-}
-
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
+const AudioPlayer: React.FC<{ base64Audio: string; }> = ({ base64Audio }) => {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -23,7 +18,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
     const setupAudio = async () => {
       try {
         const decodedBytes = decode(base64Audio);
-        const buffer = await decodeAudioData(decodedBytes, context, 24000, 1);
+        const buffer = await decodeAudioData(decodedBytes, context);
         if (isActive) {
           setAudioBuffer(buffer);
         }
