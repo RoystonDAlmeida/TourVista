@@ -67,7 +67,7 @@ router.post('/', validate(nearbyPlacesSchema), async (req, res) => {
               },
         });
 
-        let jsonText = geminiResponse.text.trim();
+        let jsonText = geminiResponse.text?.trim() || '';
         if (jsonText.startsWith('```json')) {
             jsonText = jsonText.substring(7, jsonText.length - 3).trim();
         } else if (jsonText.startsWith('```')) {
