@@ -47,7 +47,7 @@ router.post('/', validate(landmarkInfoSchema), async (req, res) => {
             config: { tools: [{ googleSearch: {} }] },
         });
 
-        const responseText = geminiResponse.text.trim();
+        const responseText = geminiResponse.text?.trim() || '';
         if (!responseText) {
             console.error("Gemini response is missing text field. Full response:", JSON.stringify(geminiResponse, null, 2));
             if (geminiResponse?.promptFeedback?.blockReason) {
