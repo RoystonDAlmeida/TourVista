@@ -77,6 +77,9 @@ router.post('/', validate(languagesSchema), async (req, res) =>{
             },
         });
 
+        if (response.text === undefined) {
+            return res.status(500).json({ error: "AI response text is undefined." });
+        }
         res.status(200).json(JSON.parse(response.text));
     } catch (error) {
         console.error("Error in /api/languages:", error);
